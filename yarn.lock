@@ -2860,6 +2860,14 @@
   resolved "https://registry.npmjs.org/@react-native/normalize-colors/-/normalize-colors-0.81.5.tgz"
   integrity sha512-0HuJ8YtqlTVRXGZuGeBejLE04wSQsibpTI+RGOyVqxZvgtlLLC/Ssw0UmbHhT4lYMp2fhdtvKZSs5emWB1zR/g==
 
+"@react-native/virtualized-lists@^0.82.1":
+  version "0.82.1"
+  resolved "https://registry.npmjs.org/@react-native/virtualized-lists/-/virtualized-lists-0.82.1.tgz"
+  integrity sha512-f5zpJg9gzh7JtCbsIwV+4kP3eI0QBuA93JGmwFRd4onQ3DnCjV2J5pYqdWtM95sjSKK1dyik59Gj01lLeKqs1Q==
+  dependencies:
+    invariant "^2.2.4"
+    nullthrows "^1.1.1"
+
 "@react-native/virtualized-lists@0.81.5":
   version "0.81.5"
   resolved "https://registry.npmjs.org/@react-native/virtualized-lists/-/virtualized-lists-0.81.5.tgz"
@@ -4209,7 +4217,7 @@
   dependencies:
     csstype "^3.0.2"
 
-"@types/react@^19.1.0", "@types/react@~19.1.0":
+"@types/react@^19.1.0", "@types/react@^19.1.1", "@types/react@~19.1.0":
   version "19.1.17"
   resolved "https://registry.npmjs.org/@types/react/-/react-19.1.17.tgz"
   integrity sha512-Qec1E3mhALmaspIrhWt9jkQMNdw6bReVu64mjvhbhq2NFPftLPVr+l1SZgmw/66WwBNpDh7ao5AT6gF5v41PFA==
