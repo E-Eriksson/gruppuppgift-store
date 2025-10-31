@@ -24,13 +24,22 @@
   object-fit: cover;
 }
 
+.cardtext {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+}
+
 .title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
-  margin: 12px;
 }
 
 .description {
   font-size: 14px;
-  margin: 0 12px 12px 12px;
+}
+
+.price {
+  font-size: 16px;
 }

@@ -38,6 +38,9 @@
     },
     "inStock": {
       "type": "boolean"
+    },
+    "price": {
+      "type": "decimal"
     }
   }
 }

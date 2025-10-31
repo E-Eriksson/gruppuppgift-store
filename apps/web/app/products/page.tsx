@@ -23,14 +23,18 @@ export default function ProductListPage() {
       <div className={styles.grid}>
         {data?.map((product: any) => (
           <div key={product.id} className={styles.card}>
-            <h2 className={styles.title}>{product.name}</h2>
-            <p className={styles.description}>{product.description}</p>
             <img
               src={`http://localhost:1337${product.image?.url}`}
               alt={product.name}
               width={300}
               className={styles.image}
             />
+            <div className={styles.cardtext}>
+              <h2 className={styles.title}>{product.name}</h2>
+              <p className={styles.description}>{product.description}</p>
+              <p className={styles.price}>{product.price} kr</p>
+              <button>Buy now</button>
+            </div>
           </div>
         ))}
       </div>
