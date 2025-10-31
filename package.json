@@ -26,5 +26,8 @@
       "**/@strapi",
       "**/@strapi/**"
     ]
+  },
+  "dependencies": {
+    "@tanstack/react-query-devtools": "^5.90.2"
   }
 }
