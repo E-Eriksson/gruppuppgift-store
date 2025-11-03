@@ -1,16 +1,16 @@
-'use client';
-import { useQuery } from '@tanstack/react-query';
-import styles from './ProductList.module.css';
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import styles from "./ProductList.module.css";
 
-async function fetchProducts() {
-  const res = await fetch('http://localhost:1337/api/products?populate=image');
+export async function fetchProducts() {
+  const res = await fetch("http://localhost:1337/api/products?populate=image");
   const data = await res.json();
   return data.data;
 }
 
 export default function ProductListPage() {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['products'],
+    queryKey: ["products"],
     queryFn: fetchProducts,
   });
 
