@@ -19,7 +19,7 @@ type Product = {
 
 export async function fetchProducts(): Promise<Product[]> {
   // Ändrad populate för Strapi v4!
-  const res = await fetch('http://localhost:1338/api/products?populate=*');
+  const res = await fetch('http://localhost:1337/api/products?populate=*');
   const data = await res.json();
   return Array.isArray(data.data) ? data.data : [];
 }
@@ -40,7 +40,7 @@ export default function ProductsPage() {
       name: p.name ?? 'Unknown',
       price: p.price ?? 0,
       description: p.description ?? '',
-      imageUrl: p.image?.url ? `http://localhost:1338${p.image.url}` : undefined,
+      imageUrl: p.image?.url ? `http://localhost:1337${p.image.url}` : undefined,
       inStock: p.inStock ?? false,
       // Stöd för både single och array category
       category: Array.isArray(p.category)
