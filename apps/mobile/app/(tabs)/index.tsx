@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { WebView } from "react-native-webview";
 
 
-const LOCAL_IP = "192.168.1.25"; // ändra till din IP-adress
+const LOCAL_IP = "192.168.1.25"; // ändra till din dators lokala ip-adress
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:1338"
@@ -36,7 +36,7 @@ async function fetchProducts(): Promise<Product[]> {
   const res = await fetch(`${API_URL}/api/products?populate=*`);
   if (!res.ok) {
     console.error("Fetch error:", res.status);
-    throw new Error("Nätverksfel");
+    throw new Error("Network error");
   }
 
   const data = await res.json();
@@ -54,12 +54,15 @@ async function fetchProducts(): Promise<Product[]> {
 
     return {
       id: p.id ?? attrs.id ?? 0,
-      name: attrs.name ?? "Okänd produkt",
+      name: attrs.name ?? "Unknown product",
       price: attrs.price ?? 0,
       description: attrs.description ?? "",
       imageUrl,
       inStock: attrs.inStock ?? false,
-      category: attrs.category?.data?.attributes?.name ?? attrs.category?.name ?? "Okategoriserad",
+      category:
+        attrs.category?.data?.attributes?.name ??
+        attrs.category?.name ??
+        "Uncategorized",
     };
   });
 }
@@ -73,7 +76,7 @@ export default function ProductsScreen() {
   const [cart, setCart] = useState<Product[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("Alla");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
   const clearCart = () => {
@@ -85,23 +88,23 @@ export default function ProductsScreen() {
 
   
   const categories = [
-    "Alla",
+    "All",
     ...Array.from(new Set(products.map((p) => p.category))),
   ];
 
   const filteredProducts =
-    selectedCategory === "Alla"
+    selectedCategory === "All"
       ? products
       : products.filter((p) => p.category === selectedCategory);
 
   if (isLoading)
-    return <Text style={styles.center}>Laddar produkter...</Text>;
+    return <Text style={styles.center}>Loading products...</Text>;
   if (error)
-    return <Text style={styles.center}>Fel vid hämtning av produkter.</Text>;
+    return <Text style={styles.center}>Error fetching products.</Text>;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>🛍️ Produkter</Text>
+      <Text style={styles.header}>🛍️ Products</Text>
 
       
       <View style={styles.categoryContainer}>
@@ -117,7 +120,7 @@ export default function ProductsScreen() {
                 styles.categoryButton,
                 selectedCategory === cat && styles.categoryButtonActive,
               ]}
-              onPress={() => setSelectedCategory(cat ?? "Alla")}
+              onPress={() => setSelectedCategory(cat ?? "All")}
             >
               <Text
                 style={[
@@ -145,7 +148,7 @@ export default function ProductsScreen() {
               <Image source={{ uri: item.imageUrl }} style={styles.image} />
             ) : (
               <View style={styles.imagePlaceholder}>
-                <Text>Ingen bild</Text>
+                <Text>No image</Text>
               </View>
             )}
             <Text style={styles.name}>{item.name}</Text>
@@ -156,7 +159,7 @@ export default function ProductsScreen() {
                 { color: item.inStock ? "green" : "red" },
               ]}
             >
-              {item.inStock ? "I lager" : "Slut i lager"}
+              {item.inStock ? "In stock" : "Out of stock"}
             </Text>
             <Text style={styles.categoryLabel}>{item.category}</Text>
 
@@ -169,7 +172,7 @@ export default function ProductsScreen() {
               disabled={!item.inStock}
             >
               <Text style={styles.addButtonText}>
-                {item.inStock ? "Lägg i kundvagn" : "Ej tillgänglig"}
+                {item.inStock ? "Add to cart" : "Unavailable"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -181,15 +184,15 @@ export default function ProductsScreen() {
         style={styles.cartButton}
         onPress={() => setShowCart(true)}
       >
-        <Text style={styles.cartButtonText}>🛒 Kundvagn ({cart.length})</Text>
+        <Text style={styles.cartButtonText}>🛒 Cart ({cart.length})</Text>
       </TouchableOpacity>
 
       
       <Modal visible={showCart} animationType="slide">
         <View style={styles.modalContainer}>
-          <Text style={styles.header}>Din kundvagn</Text>
+          <Text style={styles.header}>Your Cart</Text>
           {cart.length === 0 ? (
-            <Text>Vagnen är tom.</Text>
+            <Text>Your cart is empty.</Text>
           ) : (
             <>
               {cart.map((item) => (
@@ -197,22 +200,20 @@ export default function ProductsScreen() {
                   {item.name} – {item.price} SEK
                 </Text>
               ))}
-              <Text style={styles.total}>Totalt: {total} SEK</Text>
+              <Text style={styles.total}>Total: {total} SEK</Text>
 
               <TouchableOpacity
                 style={styles.checkoutButton}
                 onPress={() => setShowCheckout(true)}
               >
-                <Text style={styles.checkoutText}>
-                  Till betalning (PayPal)
-                </Text>
+                <Text style={styles.checkoutText}>Proceed to Payment (PayPal)</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={clearCart}
               >
-                <Text style={styles.clearButtonText}>Töm kundvagn</Text>
+                <Text style={styles.clearButtonText}>Clear Cart</Text>
               </TouchableOpacity>
             </>
           )}
@@ -220,19 +221,19 @@ export default function ProductsScreen() {
             onPress={() => setShowCart(false)}
             style={styles.closeButton}
           >
-            <Text style={styles.closeButtonText}>Stäng</Text>
+            <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
         </View>
       </Modal>
 
-      {/* 💳 Checkout via WebView */}
+      {/*  PayPal Checkout */}
       <Modal visible={showCheckout} animationType="slide">
         <View style={{ flex: 1 }}>
           <WebView
             source={{ uri: "https://www.sandbox.paypal.com/checkoutnow" }}
             onNavigationStateChange={(navState) => {
               if (navState.url.includes("success")) {
-                Alert.alert("Betalning klar!");
+                Alert.alert("Payment complete!");
                 clearCart();
                 setShowCheckout(false);
               }
@@ -242,7 +243,7 @@ export default function ProductsScreen() {
             style={styles.closeButton}
             onPress={() => setShowCheckout(false)}
           >
-            <Text style={styles.closeButtonText}>Avbryt</Text>
+            <Text style={styles.closeButtonText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -382,4 +383,3 @@ const styles = StyleSheet.create({
   },
   closeButtonText: { color: "#fff", textAlign: "center" },
 });
-
