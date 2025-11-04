@@ -1,98 +1,385 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  Alert,
+  Platform,
+  ScrollView,
+} from "react-native";
+import { useQuery } from "@tanstack/react-query";
+import { WebView } from "react-native-webview";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
-export default function HomeScreen() {
+const LOCAL_IP = "192.168.1.25"; // ändra till din IP-adress
+const API_URL =
+  Platform.OS === "web"
+    ? "http://localhost:1338"
+    : `http://${LOCAL_IP}:1338`;
+
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  description?: string;
+  imageUrl?: string;
+  inStock?: boolean;
+  category?: string;
+};
+
+
+async function fetchProducts(): Promise<Product[]> {
+  const res = await fetch(`${API_URL}/api/products?populate=*`);
+  if (!res.ok) {
+    console.error("Fetch error:", res.status);
+    throw new Error("Nätverksfel");
+  }
+
+  const data = await res.json();
+  if (!data?.data) return [];
+
+  return data.data.map((p: any) => {
+    const attrs = p.attributes ?? p ?? {};
+
+    const imageUrl =
+      attrs.image?.data?.attributes?.url
+        ? `${API_URL}${attrs.image.data.attributes.url}`
+        : attrs.image?.url
+        ? `${API_URL}${attrs.image.url}`
+        : undefined;
+
+    return {
+      id: p.id ?? attrs.id ?? 0,
+      name: attrs.name ?? "Okänd produkt",
+      price: attrs.price ?? 0,
+      description: attrs.description ?? "",
+      imageUrl,
+      inStock: attrs.inStock ?? false,
+      category: attrs.category?.data?.attributes?.name ?? attrs.category?.name ?? "Okategoriserad",
+    };
+  });
+}
+
+export default function ProductsScreen() {
+  const { data: products = [], isLoading, error } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
+
+  const [cart, setCart] = useState<Product[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Alla");
+
+  const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
+  const clearCart = () => {
+    setCart([]);
+    setShowCart(false);
+  };
+
+  const total = cart.reduce((sum, item) => sum + item.price, 0);
+
+  
+  const categories = [
+    "Alla",
+    ...Array.from(new Set(products.map((p) => p.category))),
+  ];
+
+  const filteredProducts =
+    selectedCategory === "Alla"
+      ? products
+      : products.filter((p) => p.category === selectedCategory);
+
+  if (isLoading)
+    return <Text style={styles.center}>Laddar produkter...</Text>;
+  if (error)
+    return <Text style={styles.center}>Fel vid hämtning av produkter.</Text>;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.container}>
+      <Text style={styles.header}>🛍️ Produkter</Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      
+      <View style={styles.categoryContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+        >
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[
+                styles.categoryButton,
+                selectedCategory === cat && styles.categoryButtonActive,
+              ]}
+              onPress={() => setSelectedCategory(cat ?? "Alla")}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === cat && styles.categoryTextActive,
+                ]}
+              >
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      
+      <FlatList
+        data={filteredProducts}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        contentContainerStyle={styles.productGrid}
+        columnWrapperStyle={styles.productRow}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            {item.imageUrl ? (
+              <Image source={{ uri: item.imageUrl }} style={styles.image} />
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <Text>Ingen bild</Text>
+              </View>
+            )}
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.price}>{item.price} SEK</Text>
+            <Text
+              style={[
+                styles.stockText,
+                { color: item.inStock ? "green" : "red" },
+              ]}
+            >
+              {item.inStock ? "I lager" : "Slut i lager"}
+            </Text>
+            <Text style={styles.categoryLabel}>{item.category}</Text>
+
+            <TouchableOpacity
+              style={[
+                styles.addButton,
+                !item.inStock && styles.disabledButton,
+              ]}
+              onPress={() => addToCart(item)}
+              disabled={!item.inStock}
+            >
+              <Text style={styles.addButtonText}>
+                {item.inStock ? "Lägg i kundvagn" : "Ej tillgänglig"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+
+      
+      <TouchableOpacity
+        style={styles.cartButton}
+        onPress={() => setShowCart(true)}
+      >
+        <Text style={styles.cartButtonText}>🛒 Kundvagn ({cart.length})</Text>
+      </TouchableOpacity>
+
+      
+      <Modal visible={showCart} animationType="slide">
+        <View style={styles.modalContainer}>
+          <Text style={styles.header}>Din kundvagn</Text>
+          {cart.length === 0 ? (
+            <Text>Vagnen är tom.</Text>
+          ) : (
+            <>
+              {cart.map((item) => (
+                <Text key={item.id}>
+                  {item.name} – {item.price} SEK
+                </Text>
+              ))}
+              <Text style={styles.total}>Totalt: {total} SEK</Text>
+
+              <TouchableOpacity
+                style={styles.checkoutButton}
+                onPress={() => setShowCheckout(true)}
+              >
+                <Text style={styles.checkoutText}>
+                  Till betalning (PayPal)
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={clearCart}
+              >
+                <Text style={styles.clearButtonText}>Töm kundvagn</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          <TouchableOpacity
+            onPress={() => setShowCart(false)}
+            style={styles.closeButton}
+          >
+            <Text style={styles.closeButtonText}>Stäng</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* 💳 Checkout via WebView */}
+      <Modal visible={showCheckout} animationType="slide">
+        <View style={{ flex: 1 }}>
+          <WebView
+            source={{ uri: "https://www.sandbox.paypal.com/checkoutnow" }}
+            onNavigationStateChange={(navState) => {
+              if (navState.url.includes("success")) {
+                Alert.alert("Betalning klar!");
+                clearCart();
+                setShowCheckout(false);
+              }
+            }}
+          />
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setShowCheckout(false)}
+          >
+            <Text style={styles.closeButtonText}>Avbryt</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
+//  STYLES
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  center: { marginTop: 50, textAlign: "center" },
+  container: {
+    flex: 1,
+    backgroundColor: "#f8f9fc",
+    paddingTop: 40,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  header: {
+    fontSize: 26,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#111",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  categoryContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 10,
   },
+  categoryScroll: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  categoryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: 25,
+    marginHorizontal: 6,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  categoryButtonActive: {
+    backgroundColor: "#0070ba",
+    borderColor: "#0070ba",
+  },
+  categoryText: {
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  categoryTextActive: {
+    color: "#fff",
+  },
+  productGrid: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: 100,
+  },
+  productRow: {
+    justifyContent: "center",
+  },
+  card: {
+    backgroundColor: "#fff",
+    margin: 10,
+    padding: 15,
+    borderRadius: 15,
+    width: 160,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  image: {
+    width: 100,
+    height: 120,
+    borderRadius: 10,
+    resizeMode: "contain",
+  },
+  imagePlaceholder: {
+    width: 100,
+    height: 120,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#eee",
+    borderRadius: 10,
+  },
+  name: { fontSize: 16, fontWeight: "600", marginTop: 8 },
+  price: { fontSize: 15, color: "#0070ba" },
+  stockText: { marginTop: 4, fontSize: 13 },
+  categoryLabel: { fontSize: 12, color: "#888", marginBottom: 8 },
+  addButton: {
+    backgroundColor: "#0070ba",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  disabledButton: { backgroundColor: "#ccc" },
+  addButtonText: { color: "#fff", textAlign: "center", fontSize: 13 },
+  cartButton: {
+    backgroundColor: "#111",
+    padding: 15,
+    margin: 15,
+    borderRadius: 10,
+  },
+  cartButtonText: {
+    color: "#fff",
+    textAlign: "center",
+    fontSize: 18,
+  },
+  modalContainer: { flex: 1, padding: 20, marginTop: 40 },
+  total: { fontWeight: "bold", marginTop: 10 },
+  checkoutButton: {
+    backgroundColor: "#0070ba",
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 15,
+  },
+  checkoutText: { color: "#fff", textAlign: "center" },
+  clearButton: {
+    backgroundColor: "#999",
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 10,
+  },
+  clearButtonText: { color: "#fff", textAlign: "center" },
+  closeButton: {
+    backgroundColor: "#333",
+    padding: 10,
+    borderRadius: 6,
+    marginTop: 20,
+  },
+  closeButtonText: { color: "#fff", textAlign: "center" },
 });
+
