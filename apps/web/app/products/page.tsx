@@ -5,17 +5,19 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import styles from './ProductList.module.css';
+import { type Product } from "types-package/product";
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  image?: { url: string };
-  description?: string;
-  imageUrl?: string;
-  inStock?: boolean;
-  category?: { name: string };
-};
+
+// type Product = {
+//   id: number;
+//   name: string;
+//   price: number;
+//   image?: { url: string };
+//   description?: string;
+//   imageUrl?: string;
+//   inStock?: boolean;
+//   category?: { name: string };
+// };
 
 export async function fetchProducts(): Promise<Product[]> {
   // Ändrad populate för Strapi v4!

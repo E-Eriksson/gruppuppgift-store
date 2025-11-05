@@ -13,24 +13,19 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { WebView } from "react-native-webview";
+import { Product } from "types-package/product";
 
-
-const LOCAL_IP = "192.168.1.25"; // ändra till din dators lokala ip-adress
+const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala ip-adress
 const API_URL =
   Platform.OS === "web"
-    ? "http://localhost:1338"
-    : `http://${LOCAL_IP}:1338`;
+    ? "http://localhost:1337"
+    : `http://${LOCAL_IP}:1337`;
 
-type Product = {
-  id: number;
-  name: string;
-  price: number;
-  description?: string;
-  imageUrl?: string;
-  inStock?: boolean;
-  category?: string;
-};
-
+// gör category till ett objekt för att matcha typen
+function getCategoryName(category?: { name: string } | string): string {
+  if (!category) return "Uncategorized";
+  return typeof category === "string" ? category : category.name;
+}
 
 async function fetchProducts(): Promise<Product[]> {
   const res = await fetch(`${API_URL}/api/products?populate=*`);
@@ -60,9 +55,7 @@ async function fetchProducts(): Promise<Product[]> {
       imageUrl,
       inStock: attrs.inStock ?? false,
       category:
-        attrs.category?.data?.attributes?.name ??
-        attrs.category?.name ??
-        "Uncategorized",
+        attrs.category?.data?.attributes?.name ?? attrs.category?.name ?? "Uncategorized",
     };
   });
 }
@@ -86,16 +79,15 @@ export default function ProductsScreen() {
 
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
-  
   const categories = [
     "All",
-    ...Array.from(new Set(products.map((p) => p.category))),
+    ...Array.from(new Set(products.map((p) => getCategoryName(p.category)))),
   ];
 
   const filteredProducts =
     selectedCategory === "All"
       ? products
-      : products.filter((p) => p.category === selectedCategory);
+      : products.filter((p) => getCategoryName(p.category) === selectedCategory);
 
   if (isLoading)
     return <Text style={styles.center}>Loading products...</Text>;
@@ -106,7 +98,6 @@ export default function ProductsScreen() {
     <View style={styles.container}>
       <Text style={styles.header}>🛍️ Products</Text>
 
-      
       <View style={styles.categoryContainer}>
         <ScrollView
           horizontal
@@ -135,7 +126,6 @@ export default function ProductsScreen() {
         </ScrollView>
       </View>
 
-      
       <FlatList
         data={filteredProducts}
         keyExtractor={(item) => item.id.toString()}
@@ -161,7 +151,7 @@ export default function ProductsScreen() {
             >
               {item.inStock ? "In stock" : "Out of stock"}
             </Text>
-            <Text style={styles.categoryLabel}>{item.category}</Text>
+            <Text style={styles.categoryLabel}>{getCategoryName(item.category)}</Text>
 
             <TouchableOpacity
               style={[
@@ -179,7 +169,6 @@ export default function ProductsScreen() {
         )}
       />
 
-      
       <TouchableOpacity
         style={styles.cartButton}
         onPress={() => setShowCart(true)}
@@ -187,7 +176,6 @@ export default function ProductsScreen() {
         <Text style={styles.cartButtonText}>🛒 Cart ({cart.length})</Text>
       </TouchableOpacity>
 
-      
       <Modal visible={showCart} animationType="slide">
         <View style={styles.modalContainer}>
           <Text style={styles.header}>Your Cart</Text>
@@ -226,7 +214,7 @@ export default function ProductsScreen() {
         </View>
       </Modal>
 
-      {/*  PayPal Checkout */}
+      {/* PayPal Checkout */}
       <Modal visible={showCheckout} animationType="slide">
         <View style={{ flex: 1 }}>
           <WebView
@@ -251,7 +239,7 @@ export default function ProductsScreen() {
   );
 }
 
-//  STYLES
+// STYLES
 const styles = StyleSheet.create({
   center: { marginTop: 50, textAlign: "center" },
   container: {
@@ -336,7 +324,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
     borderRadius: 10,
   },
-  name: { fontSize: 16, fontWeight: "600", marginTop: 8 },
+  name: { fontSize: 16, fontWeight: "600", marginTop: 8, textAlign: "center" },
   price: { fontSize: 15, color: "#0070ba" },
   stockText: { marginTop: 4, fontSize: 13 },
   categoryLabel: { fontSize: 12, color: "#888", marginBottom: 8 },
@@ -383,3 +371,4 @@ const styles = StyleSheet.create({
   },
   closeButtonText: { color: "#fff", textAlign: "center" },
 });
+
