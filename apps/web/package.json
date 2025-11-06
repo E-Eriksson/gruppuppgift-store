@@ -11,7 +11,8 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "types-package": "file:../../packages/shared/types-package",
+    "@repo/types": "*",
+    "@repo/api": "*",
     "@paypal/react-paypal-js": "^8.9.2",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.90.5",

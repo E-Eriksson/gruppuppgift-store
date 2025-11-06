@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "types-package": "file:../../packages/shared/types-package",
+    "api-package": "file:../../packages/shared/api-package",
     "@expo/vector-icons": "^15.0.3",
     "@react-native/virtualized-lists": "^0.82.1",
     "@react-navigation/bottom-tabs": "^7.4.0",
