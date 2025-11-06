@@ -13,76 +13,57 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { WebView } from "react-native-webview";
-import { Product } from "types-package/product";
+import { Product } from "../../../../packages/types/src/product";
+import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
 
-const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala ip-adress
+// Ändra till din dators lokala IP-adress
+const LOCAL_IP = "192.168.0.19";
 const API_URL =
   Platform.OS === "web"
     ? "http://localhost:1338"
     : `http://${LOCAL_IP}:1338`;
-import { Product } from "../../../../packages/types/src/product";
-import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
 
-// gör category till ett objekt för att matcha typen
 function getCategoryName(category?: { name: string } | string): string {
   if (!category) return "Uncategorized";
   return typeof category === "string" ? category : category.name;
 }
-
-// Lokalt IP används endast i mobile
-const LOCAL_IP = "10.100.3.121"; // ändra till din dator-IP
-const API_URL =
-  Platform.OS === "web"
-    ? "http://localhost:1337"
-    : `http://${LOCAL_IP}:1337`;
 
 export default function ProductsScreen() {
   const [cart, setCart] = useState<Product[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const { data: rawProducts = [], isLoading, error } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProductsRaw,
   });
 
-  const products: Product[] = rawProducts.map((p: any) => {
-    const attrs = p.attributes ?? p ?? {};
-
-    const imageUrl =
-      attrs.image?.data?.attributes?.url
-        ? `${API_URL}${attrs.image.data.attributes.url}`
-        : attrs.image?.url
-          ? `${API_URL}${attrs.image.url}`
-          : undefined;
-
-    return {
-      id: p.id ?? attrs.id ?? 0,
-      name: attrs.name ?? "Unknown product",
-      price: attrs.price ?? 0,
-      description: attrs.description ?? "",
-      imageUrl,
-      inStock: attrs.inStock ?? false,
-      category:
-        attrs.category?.data?.attributes?.name ??
-        attrs.category?.name ??
-        "Uncategorized",
-    };
-  });
-}
-
-export default function ProductsScreen() {
-  const { data: products = [], isLoading, error } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
-  });
-
-  const [cart, setCart] = useState<Product[]>([]);
-  const [showCart, setShowCart] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  // Omvandla rawProducts till Product[]
+  const products: Product[] = Array.isArray(rawProducts)
+    ? rawProducts.map((p: any) => {
+        const attrs = p.attributes ?? p ?? {};
+        const imageUrl =
+          attrs.image?.data?.attributes?.url
+            ? `${API_URL}${attrs.image.data.attributes.url}`
+            : attrs.image?.url
+            ? `${API_URL}${attrs.image.url}`
+            : undefined;
+        return {
+          id: p.id ?? attrs.id ?? 0,
+          name: attrs.name ?? "Unknown product",
+          price: attrs.price ?? 0,
+          description: attrs.description ?? "",
+          imageUrl,
+          inStock: attrs.inStock ?? false,
+          category:
+            attrs.category?.data?.attributes?.name ??
+            attrs.category?.name ??
+            "Uncategorized",
+        };
+      })
+    : [];
 
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
   const clearCart = () => {
@@ -100,18 +81,20 @@ export default function ProductsScreen() {
     selectedCategory === "All"
       ? products
       : products.filter(
-        (p) => getCategoryName(p.category) === selectedCategory
-      );
+          (p) => getCategoryName(p.category) === selectedCategory
+        );
 
   const handleCheckout = () => {
-    // Skicka med cart-data som query-param (enkelt, för produktion: använd backend/session)
-    const cartParam = encodeURIComponent(JSON.stringify(cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: 1 // eller använd riktig quantity om du har det
-    }))));
-    // Byt till din webbs checkout-url och port!
+    const cartParam = encodeURIComponent(
+      JSON.stringify(
+        cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+        }))
+      )
+    );
     const url = `http://localhost:3000/checkout?cart=${cartParam}`;
     setCheckoutUrl(url);
     setShowCheckout(true);
@@ -121,8 +104,6 @@ export default function ProductsScreen() {
     return <Text style={styles.center}>Loading products...</Text>;
   if (error)
     return <Text style={styles.center}>Error fetching products.</Text>;
-  if (isLoading) return <Text style={styles.center}>Loading products...</Text>;
-  if (error) return <Text style={styles.center}>Error fetching products.</Text>;
 
   return (
     <View style={styles.container}>
