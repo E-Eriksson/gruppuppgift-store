@@ -5,35 +5,17 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import styles from './ProductList.module.css';
-import { type Product } from "types-package/product";
-
-
-// type Product = {
-//   id: number;
-//   name: string;
-//   price: number;
-//   image?: { url: string };
-//   description?: string;
-//   imageUrl?: string;
-//   inStock?: boolean;
-//   category?: { name: string };
-// };
-
-export async function fetchProducts(): Promise<Product[]> {
-  // Ändrad populate för Strapi v4!
-  const res = await fetch('http://localhost:1337/api/products?populate=*');
-  const data = await res.json();
-  return Array.isArray(data.data) ? data.data : [];
-}
+import { Product } from "../../../../packages/types/src/product";
+import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
 
 export default function ProductsPage() {
   const { items, addToCart, removeFromCart, clearCart } = useCart();
   const [showCart, setShowCart] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  const { data, isLoading, error } = useQuery<Product[]>({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['products'],
-    queryFn: fetchProducts,
+    queryFn: fetchProductsRaw,
   });
 
   const products: Product[] =

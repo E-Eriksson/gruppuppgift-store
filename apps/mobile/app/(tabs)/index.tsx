@@ -13,13 +13,8 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { WebView } from "react-native-webview";
-import { Product } from "types-package/product";
-
-const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala ip-adress
-const API_URL =
-  Platform.OS === "web"
-    ? "http://localhost:1337"
-    : `http://${LOCAL_IP}:1337`;
+import { Product } from "../../../../packages/types/src/product";
+import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
 
 // gör category till ett objekt för att matcha typen
 function getCategoryName(category?: { name: string } | string): string {
@@ -27,25 +22,33 @@ function getCategoryName(category?: { name: string } | string): string {
   return typeof category === "string" ? category : category.name;
 }
 
-async function fetchProducts(): Promise<Product[]> {
-  const res = await fetch(`${API_URL}/api/products?populate=*`);
-  if (!res.ok) {
-    console.error("Fetch error:", res.status);
-    throw new Error("Network error");
-  }
+// Lokalt IP används endast i mobile
+const LOCAL_IP = "10.100.3.121"; // ändra till din dator-IP
+const API_URL =
+  Platform.OS === "web"
+    ? "http://localhost:1337"
+    : `http://${LOCAL_IP}:1337`;
 
-  const data = await res.json();
-  if (!data?.data) return [];
+export default function ProductsScreen() {
+  const [cart, setCart] = useState<Product[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
-  return data.data.map((p: any) => {
+  const { data: rawProducts = [], isLoading, error } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProductsRaw,
+  });
+
+  const products: Product[] = rawProducts.map((p: any) => {
     const attrs = p.attributes ?? p ?? {};
 
     const imageUrl =
       attrs.image?.data?.attributes?.url
         ? `${API_URL}${attrs.image.data.attributes.url}`
         : attrs.image?.url
-        ? `${API_URL}${attrs.image.url}`
-        : undefined;
+          ? `${API_URL}${attrs.image.url}`
+          : undefined;
 
     return {
       id: p.id ?? attrs.id ?? 0,
@@ -55,28 +58,17 @@ async function fetchProducts(): Promise<Product[]> {
       imageUrl,
       inStock: attrs.inStock ?? false,
       category:
-        attrs.category?.data?.attributes?.name ?? attrs.category?.name ?? "Uncategorized",
+        attrs.category?.data?.attributes?.name ??
+        attrs.category?.name ??
+        "Uncategorized",
     };
   });
-}
-
-export default function ProductsScreen() {
-  const { data: products = [], isLoading, error } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
-  });
-
-  const [cart, setCart] = useState<Product[]>([]);
-  const [showCart, setShowCart] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
   const clearCart = () => {
     setCart([]);
     setShowCart(false);
   };
-
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
   const categories = [
@@ -87,12 +79,12 @@ export default function ProductsScreen() {
   const filteredProducts =
     selectedCategory === "All"
       ? products
-      : products.filter((p) => getCategoryName(p.category) === selectedCategory);
+      : products.filter(
+        (p) => getCategoryName(p.category) === selectedCategory
+      );
 
-  if (isLoading)
-    return <Text style={styles.center}>Loading products...</Text>;
-  if (error)
-    return <Text style={styles.center}>Error fetching products.</Text>;
+  if (isLoading) return <Text style={styles.center}>Loading products...</Text>;
+  if (error) return <Text style={styles.center}>Error fetching products.</Text>;
 
   return (
     <View style={styles.container}>
@@ -151,8 +143,9 @@ export default function ProductsScreen() {
             >
               {item.inStock ? "In stock" : "Out of stock"}
             </Text>
-            <Text style={styles.categoryLabel}>{getCategoryName(item.category)}</Text>
-
+            <Text style={styles.categoryLabel}>
+              {getCategoryName(item.category)}
+            </Text>
             <TouchableOpacity
               style={[
                 styles.addButton,
@@ -189,14 +182,12 @@ export default function ProductsScreen() {
                 </Text>
               ))}
               <Text style={styles.total}>Total: {total} SEK</Text>
-
               <TouchableOpacity
                 style={styles.checkoutButton}
                 onPress={() => setShowCheckout(true)}
               >
-                <Text style={styles.checkoutText}>Proceed to Payment (PayPal)</Text>
+                <Text style={styles.checkoutText}>Proceed to Payment</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={styles.clearButton}
                 onPress={clearCart}
@@ -214,7 +205,6 @@ export default function ProductsScreen() {
         </View>
       </Modal>
 
-      {/* PayPal Checkout */}
       <Modal visible={showCheckout} animationType="slide">
         <View style={{ flex: 1 }}>
           <WebView
