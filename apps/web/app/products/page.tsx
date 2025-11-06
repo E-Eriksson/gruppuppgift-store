@@ -6,12 +6,12 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import styles from './ProductList.module.css';
 import { Product } from "../../../../packages/types/src/product";
-import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
+import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchProducts";
 
 // Spara order i Strapi
 async function saveOrderToStrapi(items: any[], total: number) {
   try {
-    const res = await fetch('http://localhost:1337/api/orders', {
+    const res = await fetch(`${API_URL}/api/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export default function ProductsPage() {
       name: p.name ?? 'Unknown',
       price: p.price ?? 0,
       description: p.description ?? '',
-      imageUrl: p.image?.url ? `http://localhost:1337${p.image.url}` : undefined,
+      imageUrl: p.image?.url ? `${API_URL}${p.image.url}` : undefined,
       inStock: p.inStock ?? false,
       category: Array.isArray(p.category)
         ? (p.category[0] ? { name: p.category[0].name } : undefined)

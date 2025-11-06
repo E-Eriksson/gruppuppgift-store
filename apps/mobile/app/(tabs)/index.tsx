@@ -14,13 +14,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { WebView } from "react-native-webview";
 import { Product } from "../../../../packages/types/src/product";
-import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
-
-const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala IP-adress
-const API_URL =
-  Platform.OS === "web"
-    ? "http://localhost:1337"
-    : `http://${LOCAL_IP}:1337`;
+import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchProducts";
 
 function getCategoryName(category?: { name: string } | string): string {
   if (!category) return "Uncategorized";

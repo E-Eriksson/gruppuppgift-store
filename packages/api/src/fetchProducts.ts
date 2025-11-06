@@ -1,5 +1,6 @@
 const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala IP-adress
-const API_URL =
+
+export const API_URL =
     typeof window !== "undefined" && window.location.hostname === "localhost"
         ? "http://localhost:1337"
         : `http://${LOCAL_IP}:1337`;
