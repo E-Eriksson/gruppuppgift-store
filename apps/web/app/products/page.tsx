@@ -8,6 +8,50 @@ import styles from './ProductList.module.css';
 import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
 
+// type Product = {
+//   id: number;
+//   name: string;
+//   price: number;
+//   image?: { url: string };
+//   description?: string;
+//   imageUrl?: string;
+//   inStock?: boolean;
+//   category?: { name: string };
+// };
+
+// Spara order i Strapi
+async function saveOrderToStrapi(items: any[], total: number) {
+  try {
+    const res = await fetch('http://localhost:1338/api/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        data: {
+          items: items.map(item => ({
+            productId: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          total,
+        }
+      }),
+    });
+    if (!res.ok) throw new Error('Order could not be saved');
+    return await res.json();
+  } catch (err) {
+    console.error('Order save error:', err);
+  }
+}
+
+export async function fetchProducts(): Promise<Product[]> {
+  const res = await fetch('http://localhost:1338/api/products?populate=*');
+  const data = await res.json();
+  return Array.isArray(data.data) ? data.data : [];
+}
+
 export default function ProductsPage() {
   const { items, addToCart, removeFromCart, clearCart } = useCart();
   const [showCart, setShowCart] = useState(false);
@@ -24,9 +68,8 @@ export default function ProductsPage() {
       name: p.name ?? 'Unknown',
       price: p.price ?? 0,
       description: p.description ?? '',
-      imageUrl: p.image?.url ? `http://localhost:1337${p.image.url}` : undefined,
+      imageUrl: p.image?.url ? `http://localhost:1338${p.image.url}` : undefined,
       inStock: p.inStock ?? false,
-      // Stöd för både single och array category
       category: Array.isArray(p.category)
         ? (p.category[0] ? { name: p.category[0].name } : undefined)
         : (p.category ? { name: p.category.name } : undefined),
@@ -207,9 +250,11 @@ export default function ProductsPage() {
                       }]
                     });
                   }}
-                  onApprove={(data, actions) => {
+                  onApprove={async (data, actions) => {
                     if (!actions.order) return Promise.resolve();
-                    return actions.order.capture().then(() => {
+                    return actions.order.capture().then(async () => {
+                      // Spara ordern i Strapi
+                      await saveOrderToStrapi(items, total);
                       alert('Payment completed!');
                       clearCart();
                     });

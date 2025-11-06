@@ -13,6 +13,13 @@ import {
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { WebView } from "react-native-webview";
+import { Product } from "types-package/product";
+
+const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala ip-adress
+const API_URL =
+  Platform.OS === "web"
+    ? "http://localhost:1338"
+    : `http://${LOCAL_IP}:1338`;
 import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
 
@@ -63,6 +70,19 @@ export default function ProductsScreen() {
         "Uncategorized",
     };
   });
+}
+
+export default function ProductsScreen() {
+  const { data: products = [], isLoading, error } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
+
+  const [cart, setCart] = useState<Product[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
   const clearCart = () => {
@@ -83,6 +103,24 @@ export default function ProductsScreen() {
         (p) => getCategoryName(p.category) === selectedCategory
       );
 
+  const handleCheckout = () => {
+    // Skicka med cart-data som query-param (enkelt, för produktion: använd backend/session)
+    const cartParam = encodeURIComponent(JSON.stringify(cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1 // eller använd riktig quantity om du har det
+    }))));
+    // Byt till din webbs checkout-url och port!
+    const url = `http://localhost:3000/checkout?cart=${cartParam}`;
+    setCheckoutUrl(url);
+    setShowCheckout(true);
+  };
+
+  if (isLoading)
+    return <Text style={styles.center}>Loading products...</Text>;
+  if (error)
+    return <Text style={styles.center}>Error fetching products.</Text>;
   if (isLoading) return <Text style={styles.center}>Loading products...</Text>;
   if (error) return <Text style={styles.center}>Error fetching products.</Text>;
 
@@ -184,7 +222,7 @@ export default function ProductsScreen() {
               <Text style={styles.total}>Total: {total} SEK</Text>
               <TouchableOpacity
                 style={styles.checkoutButton}
-                onPress={() => setShowCheckout(true)}
+                onPress={handleCheckout}
               >
                 <Text style={styles.checkoutText}>Proceed to Payment</Text>
               </TouchableOpacity>
@@ -207,16 +245,21 @@ export default function ProductsScreen() {
 
       <Modal visible={showCheckout} animationType="slide">
         <View style={{ flex: 1 }}>
-          <WebView
-            source={{ uri: "https://www.sandbox.paypal.com/checkoutnow" }}
-            onNavigationStateChange={(navState) => {
-              if (navState.url.includes("success")) {
-                Alert.alert("Payment complete!");
-                clearCart();
-                setShowCheckout(false);
-              }
-            }}
-          />
+          {checkoutUrl && (
+            <WebView
+              source={{ uri: checkoutUrl }}
+              onNavigationStateChange={(navState) => {
+                if (navState.url.includes("payment-success")) {
+                  Alert.alert("Payment complete!");
+                  clearCart();
+                  setShowCheckout(false);
+                }
+                if (navState.url.includes("payment-cancel")) {
+                  setShowCheckout(false);
+                }
+              }}
+            />
+          )}
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setShowCheckout(false)}
@@ -361,4 +404,3 @@ const styles = StyleSheet.create({
   },
   closeButtonText: { color: "#fff", textAlign: "center" },
 });
-
