@@ -16,12 +16,11 @@ import { WebView } from "react-native-webview";
 import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw } from "../../../../packages/api/src/fetchProducts";
 
-// Ändra till din dators lokala IP-adress
-const LOCAL_IP = "192.168.0.19";
+const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala IP-adress
 const API_URL =
   Platform.OS === "web"
-    ? "http://localhost:1338"
-    : `http://${LOCAL_IP}:1338`;
+    ? "http://localhost:1337"
+    : `http://${LOCAL_IP}:1337`;
 
 function getCategoryName(category?: { name: string } | string): string {
   if (!category) return "Uncategorized";
@@ -40,7 +39,6 @@ export default function ProductsScreen() {
     queryFn: fetchProductsRaw,
   });
 
-  // Omvandla rawProducts till Product[]
   const products: Product[] = Array.isArray(rawProducts)
     ? rawProducts.map((p: any) => {
         const attrs = p.attributes ?? p ?? {};
@@ -50,6 +48,7 @@ export default function ProductsScreen() {
             : attrs.image?.url
             ? `${API_URL}${attrs.image.url}`
             : undefined;
+
         return {
           id: p.id ?? attrs.id ?? 0,
           name: attrs.name ?? "Unknown product",
@@ -63,7 +62,7 @@ export default function ProductsScreen() {
             "Uncategorized",
         };
       })
-    : [];
+    : []; 
 
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
   const clearCart = () => {
