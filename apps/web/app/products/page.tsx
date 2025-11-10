@@ -135,7 +135,7 @@ export default function ProductsPage() {
                     {filteredProducts[0].inStock ? 'In stock' : 'Out of stock'}
                   </span>
                   {filteredProducts[0].category && (
-                    <div>Category: {filteredProducts[0].category.name}</div>
+                    <div className={styles.category}>{filteredProducts[0].category.name}</div>
                   )}
                   <button
                     className={styles.addToCartBtn}
@@ -155,12 +155,13 @@ export default function ProductsPage() {
                 <img src={product.imageUrl} alt={product.name} className={styles.image} />
                 <div className={styles.cardtext}>
                   <div className={styles.title}>{product.name}</div>
+                  <div className={styles.description}>{product.description}</div>
                   <div className={styles.price}>{product.price} SEK</div>
                   <span className={product.inStock ? styles.inStock : styles.outOfStock}>
                     {product.inStock ? 'In stock' : 'Out of stock'}
                   </span>
                   {product.category && (
-                    <div>Category: {product.category.name}</div>
+                    <div className={styles.category}>{product.category.name}</div>
                   )}
                   <button
                     className={styles.addToCartBtn}
