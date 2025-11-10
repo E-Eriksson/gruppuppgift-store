@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Modal,
   Alert,
-  Platform,
   ScrollView,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
@@ -35,28 +34,28 @@ export default function ProductsScreen() {
 
   const products: Product[] = Array.isArray(rawProducts)
     ? rawProducts.map((p: any) => {
-        const attrs = p.attributes ?? p ?? {};
-        const imageUrl =
-          attrs.image?.data?.attributes?.url
-            ? `${API_URL}${attrs.image.data.attributes.url}`
-            : attrs.image?.url
+      const attrs = p.attributes ?? p ?? {};
+      const imageUrl =
+        attrs.image?.data?.attributes?.url
+          ? `${API_URL}${attrs.image.data.attributes.url}`
+          : attrs.image?.url
             ? `${API_URL}${attrs.image.url}`
             : undefined;
 
-        return {
-          id: p.id ?? attrs.id ?? 0,
-          name: attrs.name ?? "Unknown product",
-          price: attrs.price ?? 0,
-          description: attrs.description ?? "",
-          imageUrl,
-          inStock: attrs.inStock ?? false,
-          category:
-            attrs.category?.data?.attributes?.name ??
-            attrs.category?.name ??
-            "Uncategorized",
-        };
-      })
-    : []; 
+      return {
+        id: p.id ?? attrs.id ?? 0,
+        name: attrs.name ?? "Unknown product",
+        price: attrs.price ?? 0,
+        description: attrs.description ?? "",
+        imageUrl,
+        inStock: attrs.inStock ?? false,
+        category:
+          attrs.category?.data?.attributes?.name ??
+          attrs.category?.name ??
+          "Uncategorized",
+      };
+    })
+    : [];
 
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
   const clearCart = () => {
@@ -74,8 +73,8 @@ export default function ProductsScreen() {
     selectedCategory === "All"
       ? products
       : products.filter(
-          (p) => getCategoryName(p.category) === selectedCategory
-        );
+        (p) => getCategoryName(p.category) === selectedCategory
+      );
 
   const handleCheckout = () => {
     const cartParam = encodeURIComponent(
@@ -146,6 +145,7 @@ export default function ProductsScreen() {
               </View>
             )}
             <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.description}>{item.description}</Text>
             <Text style={styles.price}>{item.price} SEK</Text>
             <Text
               style={[
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#fff",
     margin: 10,
-    padding: 15,
+    paddingBottom: 15,
     borderRadius: 15,
     width: 160,
     alignItems: "center",
@@ -318,20 +318,31 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   image: {
-    width: 100,
+    width: "100%",
     height: 120,
-    borderRadius: 10,
+    borderRadius: 15,
     resizeMode: "contain",
+    borderWidth: 10,
+    borderColor: "#fff"
   },
   imagePlaceholder: {
-    width: 100,
+    width: "100%",
     height: 120,
+    borderRadius: 15,
+    borderWidth: 10,
+    borderColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#eee",
-    borderRadius: 10,
   },
   name: { fontSize: 16, fontWeight: "600", marginTop: 8, textAlign: "center" },
+  description: {
+    textAlign: "center",
+    marginVertical: 5,
+    color: "#636262",
+    paddingHorizontal: 5
+
+  },
   price: { fontSize: 15, color: "#0070ba" },
   stockText: { marginTop: 4, fontSize: 13 },
   categoryLabel: { fontSize: 12, color: "#888", marginBottom: 8 },
