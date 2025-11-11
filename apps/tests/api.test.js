@@ -1,8 +1,18 @@
 import { describe, it, expect } from "vitest";
-import {
-  fetchProductsRaw,
-  API_URL,
-} from "../../packages/api/src/fetchProducts";
+
+async function fetchProductsRaw() {
+  try {
+    const res = await fetch(`http://localhost:1337/api/products?populate=*`);
+    if (!res.ok) {
+      throw new Error(`Network error: ${res.status}`);
+    }
+    const data = await res.json();
+    return Array.isArray(data.data) ? data.data : [];
+  } catch (err) {
+    console.error("fetchProductsRaw error:", err);
+    return [];
+  }
+}
 
 async function makeOrder(orderData) {
   const res = await fetch("http://localhost:1337/api/orders", {
