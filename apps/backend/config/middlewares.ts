@@ -8,7 +8,7 @@ module.exports = [
       enabled: true,
       origin: [
         'http://localhost:3000',           // Webbutik
-        'http://localhost:8081',           // Expo web
+        'http://localhost:8081',          // Expo web
         'http://192.168.1.25:8081',        // Expo Go mobil (ändra till din dators ip)
         'exp://192.168.1.25:8081',         // Expo Go (Android/iOS) ( ändra till din dators ip)
       ],

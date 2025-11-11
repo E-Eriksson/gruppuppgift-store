@@ -8,12 +8,16 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  Platform,
   ScrollView,
+  Linking,
 } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { WebView } from "react-native-webview";
 import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchProducts";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 function getCategoryName(category?: { name: string } | string): string {
   if (!category) return "Uncategorized";
@@ -27,6 +31,8 @@ export default function ProductsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
+  const router = useRouter();
+
   const { data: rawProducts = [], isLoading, error } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProductsRaw,
@@ -34,27 +40,27 @@ export default function ProductsScreen() {
 
   const products: Product[] = Array.isArray(rawProducts)
     ? rawProducts.map((p: any) => {
-      const attrs = p.attributes ?? p ?? {};
-      const imageUrl =
-        attrs.image?.data?.attributes?.url
-          ? `${API_URL}${attrs.image.data.attributes.url}`
-          : attrs.image?.url
+        const attrs = p.attributes ?? p ?? {};
+        const imageUrl =
+          attrs.image?.data?.attributes?.url
+            ? `${API_URL}${attrs.image.data.attributes.url}`
+            : attrs.image?.url
             ? `${API_URL}${attrs.image.url}`
             : undefined;
 
-      return {
-        id: p.id ?? attrs.id ?? 0,
-        name: attrs.name ?? "Unknown product",
-        price: attrs.price ?? 0,
-        description: attrs.description ?? "",
-        imageUrl,
-        inStock: attrs.inStock ?? false,
-        category:
-          attrs.category?.data?.attributes?.name ??
-          attrs.category?.name ??
-          "Uncategorized",
-      };
-    })
+        return {
+          id: p.id ?? attrs.id ?? 0,
+          name: attrs.name ?? "Unknown product",
+          price: attrs.price ?? 0,
+          description: attrs.description ?? "",
+          imageUrl,
+          inStock: attrs.inStock ?? false,
+          category:
+            attrs.category?.data?.attributes?.name ??
+            attrs.category?.name ??
+            "Uncategorized",
+        };
+      })
     : [];
 
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
@@ -73,9 +79,10 @@ export default function ProductsScreen() {
     selectedCategory === "All"
       ? products
       : products.filter(
-        (p) => getCategoryName(p.category) === selectedCategory
-      );
+          (p) => getCategoryName(p.category) === selectedCategory
+        );
 
+  
   const handleCheckout = () => {
     const cartParam = encodeURIComponent(
       JSON.stringify(
@@ -87,9 +94,12 @@ export default function ProductsScreen() {
         }))
       )
     );
-    const url = `http://localhost:3000/checkout?cart=${cartParam}`;
-    setCheckoutUrl(url);
-    setShowCheckout(true);
+    const url = `http://192.168.1.25:3000/checkout?cart=${cartParam}`;
+    if (Platform.OS === "web") {
+      window.open(url, "_blank");
+    } else {
+      Linking.openURL(url); 
+    }
   };
 
   if (isLoading)
@@ -99,6 +109,13 @@ export default function ProductsScreen() {
 
   return (
     <View style={styles.container}>
+      
+      <View style={{ flexDirection: "row", justifyContent: "flex-end", padding: 12 }}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
+          <Ionicons name="person-circle-outline" size={32} color="#0070ba" />
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.header}>🛍️ Products</Text>
 
       <View style={styles.categoryContainer}>
@@ -145,7 +162,6 @@ export default function ProductsScreen() {
               </View>
             )}
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.description}>{item.description}</Text>
             <Text style={styles.price}>{item.price} SEK</Text>
             <Text
               style={[
@@ -213,32 +229,6 @@ export default function ProductsScreen() {
             style={styles.closeButton}
           >
             <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-
-      <Modal visible={showCheckout} animationType="slide">
-        <View style={{ flex: 1 }}>
-          {checkoutUrl && (
-            <WebView
-              source={{ uri: checkoutUrl }}
-              onNavigationStateChange={(navState) => {
-                if (navState.url.includes("payment-success")) {
-                  Alert.alert("Payment complete!");
-                  clearCart();
-                  setShowCheckout(false);
-                }
-                if (navState.url.includes("payment-cancel")) {
-                  setShowCheckout(false);
-                }
-              }}
-            />
-          )}
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setShowCheckout(false)}
-          >
-            <Text style={styles.closeButtonText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Modal>

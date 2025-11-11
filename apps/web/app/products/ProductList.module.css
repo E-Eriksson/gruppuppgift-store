@@ -233,3 +233,30 @@
 .categoryBtn:last-child {
   margin-right: 0;
 }
+.profileIconWrapper {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+.profileIconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.profileIcon {
+  font-size: 28px;
+}
+.profileIconRow {
+  display: flex;
+  justify-content: flex-end;
+}
+.profileIconLarge {
+  font-size: 48px;
+  color: #0070ba;
+}
+.iconRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}

@@ -2,8 +2,8 @@ const LOCAL_IP = "192.168.0.19"; // ändra till din dators lokala IP-adress
 
 export const API_URL =
   typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:1337"
-    : `http://${LOCAL_IP}:1337`;
+    ? "http://localhost:1338"
+    : `http://${LOCAL_IP}:1338`;
 
 export async function fetchProductsRaw(): Promise<any[]> {
   try {

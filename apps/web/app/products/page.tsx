@@ -7,8 +7,9 @@ import Link from 'next/link';
 import styles from './ProductList.module.css';
 import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchProducts";
+import { useRouter } from "next/navigation";
 
-// Spara order i Strapi
+
 async function saveOrderToStrapi(items: any[], total: number) {
   try {
     const res = await fetch(`${API_URL}/api/orders`, {
@@ -39,6 +40,7 @@ export default function ProductsPage() {
   const { items, addToCart, removeFromCart, clearCart } = useCart();
   const [showCart, setShowCart] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const router = useRouter();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['products'],
@@ -98,6 +100,29 @@ export default function ProductsPage() {
             ←
           </button>
         </Link>
+      </div>
+
+      
+      <div className={styles.iconRow}>
+        <button
+          className={styles.profileIconBtn}
+          onClick={() => router.push("/profile")}
+          aria-label="Go to profile"
+        >
+          <span className={styles.profileIcon}>👤</span>
+        </button>
+        <button
+          className={styles.cartIconBtn}
+          onClick={() => setShowCart(true)}
+          aria-label="Show cart"
+        >
+          <span className={styles.cartIcon}>🛒</span>
+          {totalQuantity > 0 && (
+            <span className={styles.cartBadge}>
+              {totalQuantity}
+            </span>
+          )}
+        </button>
       </div>
 
       <h2 className={styles.heading}>Products</h2>
@@ -175,21 +200,6 @@ export default function ProductsPage() {
             ))}
           </div>
         )}
-      </div>
-
-      <div className={styles.cartIconWrapper}>
-        <button
-          className={styles.cartIconBtn}
-          onClick={() => setShowCart(true)}
-          aria-label="Show cart"
-        >
-          <span className={styles.cartIcon}>🛒</span>
-          {totalQuantity > 0 && (
-            <span className={styles.cartBadge}>
-              {totalQuantity}
-            </span>
-          )}
-        </button>
       </div>
 
       {showCart && (
