@@ -5,12 +5,9 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  gap: 10px;
   padding: 20px;
   justify-content: center;
-  max-width: 900px;
-  margin: 0 auto;
 }
 
 .card {
@@ -233,30 +230,56 @@
 .categoryBtn:last-child {
   margin-right: 0;
 }
+
 .profileIconWrapper {
   position: absolute;
   top: 20px;
   right: 20px;
 }
+
 .profileIconBtn {
   background: none;
   border: none;
   cursor: pointer;
 }
+
 .profileIcon {
   font-size: 28px;
 }
+
 .profileIconRow {
   display: flex;
   justify-content: flex-end;
 }
+
 .profileIconLarge {
   font-size: 48px;
   color: #0070ba;
 }
+
 .iconRow {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 599px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
