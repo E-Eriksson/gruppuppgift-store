@@ -4,6 +4,7 @@ import { useCart } from '../../store/cart';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './ProductList.module.css';
 import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchProducts";
@@ -47,18 +48,42 @@ export default function ProductsPage() {
     queryFn: fetchProductsRaw,
   });
 
+  // const products: Product[] =
+  //   data?.map((p: any) => ({
+  //     id: p.id,
+  //     name: p.name ?? 'Unknown',
+  //     price: p.price ?? 0,
+  //     description: p.description ?? '',
+  //     imageUrl: p.image?.url ? `${API_URL}${p.image.url}` : undefined,
+  //     inStock: p.inStock ?? false,
+  //     category: Array.isArray(p.category)
+  //       ? (p.category[0] ? { name: p.category[0].name } : undefined)
+  //       : (p.category ? { name: p.category.name } : undefined),
+  //   })) ?? [];
+
+// ============== SEO & CRO ================
   const products: Product[] =
-    data?.map((p: any) => ({
-      id: p.id,
-      name: p.name ?? 'Unknown',
-      price: p.price ?? 0,
-      description: p.description ?? '',
-      imageUrl: p.image?.url ? `${API_URL}${p.image.url}` : undefined,
-      inStock: p.inStock ?? false,
-      category: Array.isArray(p.category)
-        ? (p.category[0] ? { name: p.category[0].name } : undefined)
-        : (p.category ? { name: p.category.name } : undefined),
-    })) ?? [];
+    data?.map((p: any) => {
+      const a = p.attributes ?? p;
+      const imgPath = a?.image?.url ?? a?.image?.data?.attributes?.url;
+      const imageUrl = imgPath
+        ? (imgPath.startsWith('http') ? imgPath : `${API_URL}${imgPath}`)
+        : undefined;
+      const categoryName =
+        Array.isArray(a?.category)
+          ? (a.category[0]?.name)
+          : (a?.category?.name ?? a?.category?.data?.attributes?.name);
+      return {
+        id: p.id,
+        name: a?.name ?? 'Unknown',
+        slug: a?.slug ?? '',
+        price: a?.price ?? 0,
+        description: a?.description ?? '',
+        imageUrl,
+        inStock: a?.inStock ?? false,
+        category: categoryName ? { name: categoryName } : undefined,
+      };
+    }) ?? [];
 
   const categories = Array.from(
     new Set(products.map((p) => p.category?.name).filter((cat): cat is string => !!cat))
@@ -125,7 +150,9 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      <h2 className={styles.heading}>Products</h2>
+{/* ======================== SEO & CRO ======================== */}
+      {/* <h2 className={styles.heading}>Products</h2> */}
+      <h1 className={styles.heading}>Products</h1>
 
       <div className={styles.categoryBar}>
         <button
@@ -151,10 +178,30 @@ export default function ProductsPage() {
         {filteredProducts.length === 1 ? (
           <div className={styles.singleProduct}>
             {filteredProducts[0] && (
-              <div className={styles.card}>
-                <img src={filteredProducts[0].imageUrl} alt={filteredProducts[0].name} className={styles.image} />
+              // {/* ======================== SEO & CRO ======================== */}
+              // <div className={styles.card}>
+                // <img src={filteredProducts[0].imageUrl} alt={filteredProducts[0].name} className={styles.image} />
+                <div className={styles.card}>
+                <Link href={`/products/${filteredProducts[0].slug}`} aria-label={`View ${filteredProducts[0].name}`}>
+                  {filteredProducts[0].imageUrl ? (
+                    <Image
+                      src={filteredProducts[0].imageUrl}
+                      alt={filteredProducts[0].name}
+                      width={800}
+                      height={800}
+                      className={styles.image}
+                      priority
+                    />
+                  ) : (
+                    <div className={styles.image} />
+                  )}
+                </Link>
+
                 <div className={styles.cardtext}>
-                  <div className={styles.title}>{filteredProducts[0].name}</div>
+                  {/* <div className={styles.title}>{filteredProducts[0].name}</div> */}
+                  <Link href={`/products/${filteredProducts[0].slug}`} className={styles.title}>
+                    {filteredProducts[0].name}
+                  </Link>
                   <div className={styles.price}>{filteredProducts[0].price} SEK</div>
                   <span className={filteredProducts[0].inStock ? styles.inStock : styles.outOfStock}>
                     {filteredProducts[0].inStock ? 'In stock' : 'Out of stock'}
@@ -175,11 +222,31 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className={styles.grid}>
-            {filteredProducts.map((product) => (
+          
+          {/* ======================== SEO & CRO ======================== */}
+            {/* {filteredProducts.map((product) => (
               <div key={product.id} className={styles.card}>
-                <img src={product.imageUrl} alt={product.name} className={styles.image} />
+                <img src={product.imageUrl} alt={product.name} className={styles.image} /> */}
+              {filteredProducts.map((product) => (
+                <div key={product.id} className={styles.card}>
+                <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      width={800}
+                      height={800}
+                      className={styles.image}
+                    />
+                  ) : (
+                    <div className={styles.image} />
+                  )}
+                </Link>
                 <div className={styles.cardtext}>
-                  <div className={styles.title}>{product.name}</div>
+                  {/* <div className={styles.title}>{product.name}</div> */}
+                  <Link href={`/products/${product.slug}`} className={styles.title}>
+                    {product.name}
+                  </Link>
                   <div className={styles.description}>{product.description}</div>
                   <div className={styles.price}>{product.price} SEK</div>
                   <span className={product.inStock ? styles.inStock : styles.outOfStock}>
