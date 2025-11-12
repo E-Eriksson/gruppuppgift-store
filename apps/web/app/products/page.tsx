@@ -65,7 +65,7 @@ export default function ProductsPage() {
   //       : (p.category ? { name: p.category.name } : undefined),
   //   })) ?? [];
 
-// ============== SEO & CRO ================
+  // ============== SEO & CRO ================
   const products: Product[] =
     data?.map((p: any) => {
       const a = p.attributes ?? p;
@@ -189,89 +189,47 @@ export default function ProductsPage() {
       </div>
 
       {/* Produktlista */}
-      <div className={styles.productsWrapper}>
-        {filteredProducts.length === 1 ? (
-          <div className={styles.singleProduct}>
-            {filteredProducts[0] && (
-              <div className={styles.card}>
-                <Link href={`/products/${filteredProducts[0].slug || filteredProducts[0].id}`} aria-label={`View ${filteredProducts[0].name}`}>
-                  {filteredProducts[0].imageUrl ? (
-                    <Image
-                      src={filteredProducts[0].imageUrl}
-                      alt={filteredProducts[0].name}
-                      width={800}
-                      height={800}
-                      className={styles.image}
-                      priority
-                    />
-                  ) : (
-                    <div className={styles.image} />
-                  )}
-                </Link>
-
-                <div className={styles.cardtext}>
-                  <Link href={`/products/${filteredProducts[0].slug || filteredProducts[0].id}`} className={styles.title}>
-                    {filteredProducts[0].name}
-                  </Link>
-                  <div className={styles.price}>{filteredProducts[0].price} SEK</div>
-                  <span className={filteredProducts[0].inStock ? styles.inStock : styles.outOfStock}>
-                    {filteredProducts[0].inStock ? 'In stock' : 'Out of stock'}
-                  </span>
-                  {filteredProducts[0].category && (
-                    <div className={styles.category}>{filteredProducts[0].category.name}</div>
-                  )}
-                  <button
-                    className={styles.addToCartBtn}
-                    onClick={() => addToCart(filteredProducts[0]!)}
-                    disabled={!filteredProducts[0].inStock}
-                  >
-                    Add to cart
-                  </button>
-                </div>
-              </div>
-            )}
+      <div className={
+        filteredProducts.length === 1
+          ? styles.singleProduct
+          : filteredProducts.length <= 2
+            ? styles.twoProducts
+            : styles.grid
+      }>
+        {filteredProducts.map((product) => (
+          <div key={product.id} className={styles.card}>
+            <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
+              {product.imageUrl ? (
+                <Image
+                  src={product.imageUrl}
+                  alt={product.name}
+                  width={800}
+                  height={800}
+                  className={styles.image}
+                />
+              ) : (
+                <div className={styles.image} />
+              )}
+            </Link>
+            <div className={styles.cardtext}>
+              <Link href={`/products/${product.slug}`} className={styles.title}>
+                {product.name}
+              </Link>
+              <div className={styles.price}>{product.price} SEK</div>
+              <span className={product.inStock ? styles.inStock : styles.outOfStock}>
+                {product.inStock ? 'In stock' : 'Out of stock'}
+              </span>
+              {product.category && <div className={styles.category}>{product.category.name}</div>}
+              <button
+                className={styles.addToCartBtn}
+                onClick={() => addToCart(product)}
+                disabled={!product.inStock}
+              >
+                Add to cart
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className={styles.grid}>
-            {filteredProducts.map((product) => (
-              <div key={product.id} className={styles.card}>
-                <Link href={`/products/${product.slug || product.id}`} aria-label={`View ${product.name}`}>
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      width={800}
-                      height={800}
-                      className={styles.image}
-                    />
-                  ) : (
-                    <div className={styles.image} />
-                  )}
-                </Link>
-                <div className={styles.cardtext}>
-                  <Link href={`/products/${product.slug || product.id}`} className={styles.title}>
-                    {product.name}
-                  </Link>
-                  <div className={styles.description}>{product.description}</div>
-                  <div className={styles.price}>{product.price} SEK</div>
-                  <span className={product.inStock ? styles.inStock : styles.outOfStock}>
-                    {product.inStock ? 'In stock' : 'Out of stock'}
-                  </span>
-                  {product.category && (
-                    <div className={styles.category}>{product.category.name}</div>
-                  )}
-                  <button
-                    className={styles.addToCartBtn}
-                    onClick={() => addToCart(product)}
-                    disabled={!product.inStock}
-                  >
-                    Add to cart
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        ))}
       </div>
 
       {/* Popup för varukorg */}
