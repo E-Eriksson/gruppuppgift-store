@@ -1,4 +1,5 @@
 'use client';
+// Importerar React hooks och nödvändiga bibliotek
 import { useState } from 'react';
 import { useCart } from '../../store/cart';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
@@ -10,7 +11,7 @@ import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchProducts";
 import { useRouter } from "next/navigation";
 
-
+// Funktion för att spara order till Strapi-API
 async function saveOrderToStrapi(items: any[], total: number) {
   try {
     const res = await fetch(`${API_URL}/api/orders`, {
@@ -38,16 +39,19 @@ async function saveOrderToStrapi(items: any[], total: number) {
 }
 
 export default function ProductsPage() {
+  // State och hooks för varukorg, kategori och navigation
   const { items, addToCart, removeFromCart, clearCart } = useCart();
   const [showCart, setShowCart] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const router = useRouter();
 
+  // Hämta produkter asynkront med React Query
   const { data, isLoading, error } = useQuery({
     queryKey: ['products'],
     queryFn: fetchProductsRaw,
   });
 
+  // Omvandla API-data till produktobjekt
   // const products: Product[] =
   //   data?.map((p: any) => ({
   //     id: p.id,
@@ -85,23 +89,28 @@ export default function ProductsPage() {
       };
     }) ?? [];
 
+  // Skapa lista av unika kategorier
   const categories = Array.from(
     new Set(products.map((p) => p.category?.name).filter((cat): cat is string => !!cat))
   );
 
+  // Filtrera produkter på vald kategori
   const filteredProducts =
     selectedCategory === 'All'
       ? products
       : products.filter((p) => p.category?.name === selectedCategory);
 
+  // Beräkna totalsumma och antal produkter i varukorgen
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Öka antal av en produkt i varukorgen
   const increaseQuantity = (id: number) => {
     const item = items.find((i) => i.id === id);
     if (item) addToCart({ id: item.id, name: item.name, price: item.price, imageUrl: item.imageUrl });
   };
 
+  // Minska antal av en produkt i varukorgen
   const decreaseQuantity = (id: number) => {
     const item = items.find((i) => i.id === id);
     if (item && item.quantity > 1) {
@@ -114,11 +123,14 @@ export default function ProductsPage() {
     }
   };
 
+  // Visa laddningsmeddelande om produkter hämtas
   if (isLoading) return <div>Loading...</div>;
+  // Visa felmeddelande om något gick fel vid hämtning
   if (error) return <div>An error occurred while fetching products.</div>;
 
   return (
     <div>
+      {/* Tillbaka-knapp */}
       <div className={styles.backBtnWrapper}>
         <Link href="/">
           <button className={styles.backBtn} aria-label="Go to homepage">
@@ -127,7 +139,7 @@ export default function ProductsPage() {
         </Link>
       </div>
 
-      
+      {/* Ikoner för profil och varukorg */}
       <div className={styles.iconRow}>
         <button
           className={styles.profileIconBtn}
@@ -150,10 +162,12 @@ export default function ProductsPage() {
         </button>
       </div>
 
-{/* ======================== SEO & CRO ======================== */}
+      {/* Rubrik */}
+      {/* ======================== SEO & CRO ======================== */}
       {/* <h2 className={styles.heading}>Products</h2> */}
       <h1 className={styles.heading}>Products</h1>
 
+      {/* Kategorival */}
       <div className={styles.categoryBar}>
         <button
           onClick={() => setSelectedCategory('All')}
@@ -174,6 +188,7 @@ export default function ProductsPage() {
         ))}
       </div>
 
+      {/* Produktlista */}
       <div className={styles.productsWrapper}>
         {filteredProducts.length === 1 ? (
           <div className={styles.singleProduct}>
@@ -181,7 +196,7 @@ export default function ProductsPage() {
               // {/* ======================== SEO & CRO ======================== */}
               // <div className={styles.card}>
                 // <img src={filteredProducts[0].imageUrl} alt={filteredProducts[0].name} className={styles.image} />
-                <div className={styles.card}>
+              <div className={styles.card}>
                 <Link href={`/products/${filteredProducts[0].slug}`} aria-label={`View ${filteredProducts[0].name}`}>
                   {filteredProducts[0].imageUrl ? (
                     <Image
@@ -222,13 +237,13 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className={styles.grid}>
-          
-          {/* ======================== SEO & CRO ======================== */}
+
+             {/* ======================== SEO & CRO ======================== */}
             {/* {filteredProducts.map((product) => (
               <div key={product.id} className={styles.card}>
                 <img src={product.imageUrl} alt={product.name} className={styles.image} /> */}
-              {filteredProducts.map((product) => (
-                <div key={product.id} className={styles.card}>
+            {filteredProducts.map((product) => (
+              <div key={product.id} className={styles.card}>
                 <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
                   {product.imageUrl ? (
                     <Image
@@ -269,6 +284,7 @@ export default function ProductsPage() {
         )}
       </div>
 
+      {/* Popup för varukorg */}
       {showCart && (
         <div className={styles.cartPopup}>
           <button
@@ -297,6 +313,7 @@ export default function ProductsPage() {
               ))}
               <hr />
               <div className={styles.total}>Total: {total} SEK</div>
+              {/* PayPal-integration */}
               <PayPalScriptProvider options={{ clientId: "sb", currency: "SEK" }}>
                 <PayPalButtons
                   style={{ layout: "vertical" }}
