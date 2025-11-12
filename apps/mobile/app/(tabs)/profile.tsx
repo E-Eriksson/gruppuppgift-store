@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { useAuth } from "../../../../packages/shared/store/auth";
-
-const API_URL = "http://192.168.1.25:1338";
+import { API_URL } from "../../../../packages/api/src/fetchProducts";
 
 export default function Profile() {
   const { user, jwt, logout } = useAuth();

@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useAuth } from "../../../../packages/shared/store/auth";
 import { useRouter } from "expo-router";
-
-const API_URL = "http://192.168.1.25:1338";
+import { API_URL } from "../../../../packages/api/src/fetchProducts";
 
 export default function AuthScreen() {
   const { setAuth } = useAuth();
