@@ -288,9 +288,10 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   productGrid: {
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     paddingBottom: 100,
+    alignSelf: "center"
   },
   productRow: {
     justifyContent: "center",
@@ -325,7 +326,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#eee",
   },
-  name: { fontSize: 16, fontWeight: "600", marginTop: 8, textAlign: "center" },
+  name: { fontSize: 16, fontWeight: "600", marginTop: 8, textAlign: "center", marginBottom: 4 },
   description: {
     textAlign: "center",
     marginVertical: 5,
