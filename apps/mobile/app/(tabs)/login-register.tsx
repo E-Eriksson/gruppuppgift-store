@@ -2,26 +2,30 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useAuth } from "../../../../packages/shared/store/auth";
 import { useRouter } from "expo-router";
+import { API_URL } from "../../../../packages/api/src/fetchProducts";
 
-const API_URL = "http://192.168.1.25:1338";
-
+// Huvudkomponent för inloggning och registrering
 export default function AuthScreen() {
+  // Hooks för auth, navigation och state
   const { setAuth } = useAuth();
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState(""); 
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true); // Växla mellan login och register
+  const [email, setEmail] = useState(""); // State för e-post
+  const [username, setUsername] = useState(""); // State för användarnamn
+  const [password, setPassword] = useState(""); // State för lösenord
+  const [loading, setLoading] = useState(false); // State för laddning
 
+  // Funktion för att hantera login/registrering
   const handleAuth = async () => {
     setLoading(true);
     try {
+      // Välj endpoint och request-body beroende på login/register
       const endpoint = isLogin ? "/api/auth/local" : "/api/auth/local/register";
       const body = isLogin
         ? { identifier: email, password }
         : { username, email, password };
 
+      // Skicka POST-request till Strapi API
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -29,11 +33,12 @@ export default function AuthScreen() {
       });
       const data = await res.json();
       if (data.jwt) {
+        // Spara JWT-token och användare i auth-store
         setAuth(data.jwt, data.user);
         Alert.alert("Success", isLogin ? "Logged in!" : "Registered!");
         router.replace("/(tabs)/profile"); // Navigera till profilsidan
       } else {
-        // Försök hitta felmeddelande på flera nivåer
+        // Visa felmeddelande från API eller fallback
         let msg =
           data?.error?.message ||
           data?.error?.details?.errors?.[0]?.message ||
@@ -43,6 +48,7 @@ export default function AuthScreen() {
         Alert.alert("Error", msg);
       }
     } catch (err) {
+      // Visa nätverksfel
       Alert.alert("Error", "Network error");
     }
     setLoading(false);
@@ -50,7 +56,9 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Rubrik för login/register */}
       <Text style={styles.header}>{isLogin ? "Login" : "Register"}</Text>
+      {/* Visa användarnamn bara vid registrering */}
       {!isLogin && (
         <TextInput
           style={styles.input}
@@ -60,6 +68,7 @@ export default function AuthScreen() {
           onChangeText={setUsername}
         />
       )}
+      {/* Fält för e-post */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -67,6 +76,7 @@ export default function AuthScreen() {
         value={email}
         onChangeText={setEmail}
       />
+      {/* Fält för lösenord */}
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -74,11 +84,13 @@ export default function AuthScreen() {
         value={password}
         onChangeText={setPassword}
       />
+      {/* Knapp för login/register */}
       <Button
         title={loading ? "Please wait..." : isLogin ? "Login" : "Register"}
         onPress={handleAuth}
         disabled={loading}
       />
+      {/* Växla mellan login och register */}
       <Button
         title={isLogin ? "Create account" : "Already have an account? Login"}
         onPress={() => setIsLogin((v) => !v)}
@@ -87,10 +99,12 @@ export default function AuthScreen() {
   );
 }
 
+// Inställning för tabBar-label
 export const unstable_settings = {
   tabBarLabel: "Log in/Register",
 };
 
+// Stilar för komponenten
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", padding: 24 },
   header: { fontSize: 24, fontWeight: "bold", marginBottom: 24, textAlign: "center" },
@@ -98,4 +112,4 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: "#ccc", borderRadius: 6,
     padding: 12, marginBottom: 12, fontSize: 16,
   },
-}); 
+});

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_URL } from "../../../../packages/api/src/fetchProducts";
 
 export function useAuth() {
   const [user, setUser] = useState<any>(() => {
@@ -16,7 +17,7 @@ export function useAuth() {
   });
 
   async function login(email: string, password: string) {
-    const res = await fetch("http://localhost:1338/api/auth/local", {
+    const res = await fetch(`${API_URL}/api/auth/local`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ identifier: email, password }),
@@ -35,7 +36,7 @@ export function useAuth() {
   }
 
   async function register(username: string, email: string, password: string) {
-    const res = await fetch("http://localhost:1338/api/auth/local/register", {
+    const res = await fetch(`${API_URL}/api/auth/local/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),

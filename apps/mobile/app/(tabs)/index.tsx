@@ -19,12 +19,14 @@ import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchPro
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
+// Funktion för att hämta kategorinamn
 function getCategoryName(category?: { name: string } | string): string {
   if (!category) return "Uncategorized";
   return typeof category === "string" ? category : category.name;
 }
 
 export default function ProductsScreen() {
+  // State för varukorg, visning av varukorg, checkout, vald kategori och checkout-url
   const [cart, setCart] = useState<Product[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -33,11 +35,13 @@ export default function ProductsScreen() {
 
   const router = useRouter();
 
+  // Hämta produkter med React Query
   const { data: rawProducts = [], isLoading, error } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProductsRaw,
   });
 
+  // Omvandla API-data till Product-objekt
   const products: Product[] = Array.isArray(rawProducts)
     ? rawProducts.map((p: any) => {
         const attrs = p.attributes ?? p ?? {};
@@ -63,18 +67,23 @@ export default function ProductsScreen() {
       })
     : [];
 
+  // Lägg till produkt i varukorgen
   const addToCart = (product: Product) => setCart((prev) => [...prev, product]);
+  // Töm varukorgen
   const clearCart = () => {
     setCart([]);
     setShowCart(false);
   };
+  // Beräkna totalsumma
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
+  // Lista av kategorier
   const categories = [
     "All",
     ...Array.from(new Set(products.map((p) => getCategoryName(p.category)))),
   ];
 
+  // Filtrera produkter på vald kategori
   const filteredProducts =
     selectedCategory === "All"
       ? products
@@ -82,7 +91,7 @@ export default function ProductsScreen() {
           (p) => getCategoryName(p.category) === selectedCategory
         );
 
-  
+  // Hantera checkout (öppna webbläsare eller länk)
   const handleCheckout = () => {
     const cartParam = encodeURIComponent(
       JSON.stringify(
@@ -102,22 +111,26 @@ export default function ProductsScreen() {
     }
   };
 
+  // Visa laddningsmeddelande
   if (isLoading)
     return <Text style={styles.center}>Loading products...</Text>;
+  // Visa felmeddelande
   if (error)
     return <Text style={styles.center}>Error fetching products.</Text>;
 
   return (
     <View style={styles.container}>
-      
+      {/* Profilknapp */}
       <View style={{ flexDirection: "row", justifyContent: "flex-end", padding: 12 }}>
         <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
           <Ionicons name="person-circle-outline" size={32} color="#0070ba" />
         </TouchableOpacity>
       </View>
 
+      {/* Rubrik */}
       <Text style={styles.header}>🛍️ Products</Text>
 
+      {/* Kategorival */}
       <View style={styles.categoryContainer}>
         <ScrollView
           horizontal
@@ -146,6 +159,7 @@ export default function ProductsScreen() {
         </ScrollView>
       </View>
 
+      {/* Produktlista */}
       <FlatList
         data={filteredProducts}
         keyExtractor={(item) => item.id.toString()}
@@ -190,6 +204,7 @@ export default function ProductsScreen() {
         )}
       />
 
+      {/* Knapp för att visa varukorg */}
       <TouchableOpacity
         style={styles.cartButton}
         onPress={() => setShowCart(true)}
@@ -197,6 +212,7 @@ export default function ProductsScreen() {
         <Text style={styles.cartButtonText}>🛒 Cart ({cart.length})</Text>
       </TouchableOpacity>
 
+      {/* Modal för varukorg */}
       <Modal visible={showCart} animationType="slide">
         <View style={styles.modalContainer}>
           <Text style={styles.header}>Your Cart</Text>
@@ -288,9 +304,10 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   productGrid: {
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     paddingBottom: 100,
+    alignSelf: "center"
   },
   productRow: {
     justifyContent: "center",
@@ -325,7 +342,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#eee",
   },
-  name: { fontSize: 16, fontWeight: "600", marginTop: 8, textAlign: "center" },
+  name: { fontSize: 16, fontWeight: "600", marginTop: 8, textAlign: "center", marginBottom: 4 },
   description: {
     textAlign: "center",
     marginVertical: 5,

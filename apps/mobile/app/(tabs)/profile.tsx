@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { useAuth } from "../../../../packages/shared/store/auth";
+import { API_URL } from "../../../../packages/api/src/fetchProducts";
 
-const API_URL = "http://192.168.1.25:1338";
-
+// Profilkomponent för användaren
 export default function Profile() {
+  // Hämta användare, jwt-token och logout-funktion från auth-store
   const { user, jwt, logout } = useAuth();
+  // State för ordrar och laddningsstatus
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Hämta ordrar när jwt och user finns
   useEffect(() => {
     if (!jwt || !user) return;
     const fetchOrders = async () => {
       try {
+        // Hämta ordrar från API med användarens id och JWT-token
         const res = await fetch(`${API_URL}/api/orders?filters[user][$eq]=${user.id}&populate=*`, {
           headers: { Authorization: `Bearer ${jwt}` },
         });
@@ -26,6 +30,7 @@ export default function Profile() {
     fetchOrders();
   }, [jwt, user]);
 
+  // Om användaren inte är inloggad, visa meddelande
   if (!user) {
     return (
       <View style={styles.container}>
@@ -36,10 +41,12 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
+      {/* Profilinformation */}
       <Text style={styles.header}>Profile</Text>
       <Text style={styles.info}>Username: {user.username}</Text>
       <Text style={styles.info}>Email: {user.email}</Text>
       <Button title="Logout" onPress={logout} />
+      {/* Lista med användarens ordrar */}
       <Text style={styles.header}>Your Orders</Text>
       {loading ? (
         <ActivityIndicator />
@@ -61,6 +68,7 @@ export default function Profile() {
   );
 }
 
+// Stilar för komponenten
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24 },
   header: { fontSize: 22, fontWeight: "bold", marginBottom: 12 },
