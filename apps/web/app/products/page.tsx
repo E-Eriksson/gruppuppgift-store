@@ -142,18 +142,17 @@ export default function ProductsPage() {
   };
 
   // Öka antal av en produkt i varukorgen
-  const increaseQuantity = (id: number) => {
-    const item = items.find((i) => i.id === id);
-    if (item) {
-      addToCart({ id: item.id, name: item.name, price: item.price, imageUrl: item.imageUrl });
-      trackAddToCart({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        category: item.category
-      });
-    }
-  };
+ // Öka antal av en produkt i varukorgen
+const increaseQuantity = (id: number) => {
+  const item = items.find((i) => i.id === id);
+  if (item) addToCart({ 
+    id: item.id, 
+    name: item.name, 
+    price: item.price, 
+    imageUrl: item.imageUrl,
+    category: item.category // Lägg till category
+  });
+};
 
   // Minska antal av en produkt i varukorgen
   const decreaseQuantity = (id: number) => {

@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useCart } from '../../store/cart';
+import { useCart } from '../../../store/cart';      // Uppdaterad med tracking
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './ProductDetail.module.css';
 // Lägg till imports för tracking
-import { trackPageView, trackProductView, trackAddToCart } from '../../lib/events';
+import { trackPageView, trackProductView, trackAddToCart } from '../../../lib/events';
 
 // Mock-funktion för att hämta produktdata baserat på slug
 async function fetchProductBySlug(slug: string) {
