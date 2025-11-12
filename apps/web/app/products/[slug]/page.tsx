@@ -13,7 +13,10 @@ export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const slugOrId = params.slug as string;
-  const { addToCart } = useCart();
+  const { items, addToCart } = useCart();
+
+  // Calculate total quantity in cart
+  const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
   // Fetch product by slug or ID
   const { data, isLoading, error } = useQuery({
@@ -102,11 +105,14 @@ export default function ProductDetailPage() {
           </button>
         </Link>
         <button
-          className={styles.cartBtn}
+          className={styles.cartIconBtn}
           onClick={() => router.push('/products')}
           aria-label="Go to cart"
         >
-          🛒 Cart
+          <span className={styles.cartIcon}>🛒</span>
+          {totalQuantity > 0 && (
+            <span className={styles.cartBadge}>{totalQuantity}</span>
+          )}
         </button>
       </div>
 
