@@ -52,19 +52,6 @@ export default function ProductsPage() {
   });
 
   // Omvandla API-data till produktobjekt
-  // const products: Product[] =
-  //   data?.map((p: any) => ({
-  //     id: p.id,
-  //     name: p.name ?? 'Unknown',
-  //     price: p.price ?? 0,
-  //     description: p.description ?? '',
-  //     imageUrl: p.image?.url ? `${API_URL}${p.image.url}` : undefined,
-  //     inStock: p.inStock ?? false,
-  //     category: Array.isArray(p.category)
-  //       ? (p.category[0] ? { name: p.category[0].name } : undefined)
-  //       : (p.category ? { name: p.category.name } : undefined),
-  //   })) ?? [];
-
   // ============== SEO & CRO ================
   const products: Product[] =
     data?.map((p: any) => {
@@ -164,7 +151,6 @@ export default function ProductsPage() {
 
       {/* Rubrik */}
       {/* ======================== SEO & CRO ======================== */}
-      {/* <h2 className={styles.heading}>Products</h2> */}
       <h1 className={styles.heading}>Products</h1>
 
       {/* Kategorival */}
