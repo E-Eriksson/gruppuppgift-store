@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export type CartItem = {
+  category: any;
   id: number;
   name: string;
   price: number;
