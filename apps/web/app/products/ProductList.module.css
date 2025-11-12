@@ -5,7 +5,7 @@
 
 .grid {
   display: grid;
-  gap: 10px;
+  gap: 20px;
   padding: 20px;
   justify-content: center;
 }
@@ -18,8 +18,6 @@
   flex-direction: column;
   background-color: white;
   width: 320px;
-  margin: 0 auto;
-
 }
 
 .image {
@@ -151,7 +149,7 @@
   border-radius: 12px;
   padding: 32px;
   box-shadow: 0 4px 24px #aaa;
-  z-index: 1000; 
+  z-index: 1000;
 }
 
 .closeBtn {
@@ -219,6 +217,14 @@
   align-items: flex-start;
   min-height: 60vh;
   background-color: #f8f9fc;
+}
+
+.twoProducts {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .singleProduct {
