@@ -193,11 +193,8 @@ export default function ProductsPage() {
         {filteredProducts.length === 1 ? (
           <div className={styles.singleProduct}>
             {filteredProducts[0] && (
-              // {/* ======================== SEO & CRO ======================== */}
-              // <div className={styles.card}>
-                // <img src={filteredProducts[0].imageUrl} alt={filteredProducts[0].name} className={styles.image} />
               <div className={styles.card}>
-                <Link href={`/products/${filteredProducts[0].slug}`} aria-label={`View ${filteredProducts[0].name}`}>
+                <Link href={`/products/${filteredProducts[0].slug || filteredProducts[0].id}`} aria-label={`View ${filteredProducts[0].name}`}>
                   {filteredProducts[0].imageUrl ? (
                     <Image
                       src={filteredProducts[0].imageUrl}
@@ -213,8 +210,7 @@ export default function ProductsPage() {
                 </Link>
 
                 <div className={styles.cardtext}>
-                  {/* <div className={styles.title}>{filteredProducts[0].name}</div> */}
-                  <Link href={`/products/${filteredProducts[0].slug}`} className={styles.title}>
+                  <Link href={`/products/${filteredProducts[0].slug || filteredProducts[0].id}`} className={styles.title}>
                     {filteredProducts[0].name}
                   </Link>
                   <div className={styles.price}>{filteredProducts[0].price} SEK</div>
@@ -237,14 +233,9 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className={styles.grid}>
-
-             {/* ======================== SEO & CRO ======================== */}
-            {/* {filteredProducts.map((product) => (
-              <div key={product.id} className={styles.card}>
-                <img src={product.imageUrl} alt={product.name} className={styles.image} /> */}
             {filteredProducts.map((product) => (
               <div key={product.id} className={styles.card}>
-                <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
+                <Link href={`/products/${product.slug || product.id}`} aria-label={`View ${product.name}`}>
                   {product.imageUrl ? (
                     <Image
                       src={product.imageUrl}
@@ -258,8 +249,7 @@ export default function ProductsPage() {
                   )}
                 </Link>
                 <div className={styles.cardtext}>
-                  {/* <div className={styles.title}>{product.name}</div> */}
-                  <Link href={`/products/${product.slug}`} className={styles.title}>
+                  <Link href={`/products/${product.slug || product.id}`} className={styles.title}>
                     {product.name}
                   </Link>
                   <div className={styles.description}>{product.description}</div>
