@@ -1,6 +1,6 @@
 'use client';
 // Importerar React hooks och nödvändiga bibliotek
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../../store/cart';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +10,8 @@ import styles from './ProductList.module.css';
 import { Product } from "../../../../packages/types/src/product";
 import { fetchProductsRaw, API_URL } from "../../../../packages/api/src/fetchProducts";
 import { useRouter } from "next/navigation";
+// Importera tracking functions
+import { trackPageView, trackProductView, trackAddToCart, trackViewCart, trackBeginCheckout, trackAddPaymentInfo, trackPurchase } from '../../lib/events';
 
 // Funktion för att spara order till Strapi-API
 async function saveOrderToStrapi(items: any[], total: number) {
@@ -45,6 +47,11 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const router = useRouter();
 
+  // Track page view när komponenten laddas
+  useEffect(() => {
+    trackPageView('Products Page', window.location.pathname);
+  }, []);
+
   // Hämta produkter asynkront med React Query
   const { data, isLoading, error } = useQuery({
     queryKey: ['products'],
@@ -76,6 +83,20 @@ export default function ProductsPage() {
       };
     }) ?? [];
 
+  // Track product views när produkter laddas
+  useEffect(() => {
+    if (products.length > 0) {
+      products.forEach(product => {
+        trackProductView({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          category: product.category?.name
+        });
+      });
+    }
+  }, [products]);
+
   // Skapa lista av unika kategorier
   const categories = Array.from(
     new Set(products.map((p) => p.category?.name).filter((cat): cat is string => !!cat))
@@ -91,11 +112,48 @@ export default function ProductsPage() {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Öka antal av en produkt i varukorgen
-  const increaseQuantity = (id: number) => {
-    const item = items.find((i) => i.id === id);
-    if (item) addToCart({ id: item.id, name: item.name, price: item.price, imageUrl: item.imageUrl });
+  // Enhanced add to cart med tracking
+  const handleAddToCart = (product: Product) => {
+    addToCart(product);
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      category: product.category?.name
+    });
   };
+
+  // Enhanced show cart med tracking
+  const handleShowCart = () => {
+    setShowCart(true);
+    trackViewCart(items, total);
+    if (items.length > 0) {
+      trackBeginCheckout(items, total);
+    }
+  };
+
+  // Enhanced payment complete med tracking
+  const handlePaymentComplete = async () => {
+    const orderId = `order-${Date.now()}`;
+    trackPurchase(orderId, total, items);
+    await saveOrderToStrapi(items, total);
+    alert('Payment completed!');
+    clearCart();
+    setShowCart(false);
+  };
+
+  // Öka antal av en produkt i varukorgen
+ // Öka antal av en produkt i varukorgen
+const increaseQuantity = (id: number) => {
+  const item = items.find((i) => i.id === id);
+  if (item) addToCart({ 
+    id: item.id, 
+    name: item.name, 
+    price: item.price, 
+    imageUrl: item.imageUrl,
+    category: item.category // Lägg till category
+  });
+};
 
   // Minska antal av en produkt i varukorgen
   const decreaseQuantity = (id: number) => {
@@ -137,7 +195,7 @@ export default function ProductsPage() {
         </button>
         <button
           className={styles.cartIconBtn}
-          onClick={() => setShowCart(true)}
+          onClick={handleShowCart} // Uppdaterad med tracking
           aria-label="Show cart"
         >
           <span className={styles.cartIcon}>🛒</span>
@@ -208,7 +266,7 @@ export default function ProductsPage() {
               {product.category && <div className={styles.category}>{product.category.name}</div>}
               <button
                 className={styles.addToCartBtn}
-                onClick={() => addToCart(product)}
+                onClick={() => handleAddToCart(product)} // Uppdaterad med tracking
                 disabled={!product.inStock}
               >
                 Add to cart
@@ -252,6 +310,7 @@ export default function ProductsPage() {
                 <PayPalButtons
                   style={{ layout: "vertical" }}
                   createOrder={(data, actions) => {
+                    trackAddPaymentInfo('paypal'); // Tracking tillagd
                     return actions.order.create({
                       intent: "CAPTURE",
                       purchase_units: [{
@@ -265,10 +324,7 @@ export default function ProductsPage() {
                   onApprove={async (data, actions) => {
                     if (!actions.order) return Promise.resolve();
                     return actions.order.capture().then(async () => {
-                      // Spara ordern i Strapi
-                      await saveOrderToStrapi(items, total);
-                      alert('Payment completed!');
-                      clearCart();
+                      await handlePaymentComplete(); // Uppdaterad med tracking
                     });
                   }}
                 />
