@@ -58,6 +58,7 @@ export default function ProductsPage() {
     queryFn: fetchProductsRaw,
   });
 
+  // Omvandla API-data till produktobjekt
   // ============== SEO & CRO ================
   const products: Product[] =
     data?.map((p: any) => {
@@ -207,6 +208,7 @@ const increaseQuantity = (id: number) => {
       </div>
 
       {/* Rubrik */}
+      {/* ======================== SEO & CRO ======================== */}
       <h1 className={styles.heading}>Products</h1>
 
       {/* Kategorival */}
