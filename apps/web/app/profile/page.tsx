@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../store/auth";
-import styles from "../products/ProductList.module.css";
+import styles from "./Profile.module.css";
 import { API_URL } from "../../../../packages/api/src/fetchProducts";
+import Link from "next/link";
 
 export default function ProfilePage() {
   const { user, jwt, logout, login, register } = useAuth();
@@ -57,88 +58,94 @@ export default function ProfilePage() {
     }
   };
 
-  
   if (!isMounted) return null;
 
-  
-  if (!user) {
-    return (
-      <div className={styles.profileContainer}>
-        <h2>{isRegister ? "Register" : "Login"}</h2>
-        <form onSubmit={handleSubmit} className={styles.profileInfo}>
-          {isRegister && (
+  return (
+    <div className={styles.profileContainer}>
+      {/* Back Button */}
+      <div className={styles.profileBackBtnWrapper}>
+        <Link href="/products">
+          <button className={styles.profileBackBtn} aria-label="Go back to products">
+            ← Products
+          </button>
+        </Link>
+      </div>
+
+      {!user ? (
+        <>
+          <h2>{isRegister ? "Register" : "Login"}</h2>
+          <form onSubmit={handleSubmit} className={styles.profileForm}>
+            {isRegister && (
+              <div>
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={form.username}
+                  onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                  required
+                />
+              </div>
+            )}
             <div>
               <input
-                type="text"
-                placeholder="Username"
-                value={form.username}
-                onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                type="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 required
               />
             </div>
-          )}
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-              required
-            />
-          </div>
-          {error && <div className={styles.error}>{error}</div>}
-          <button type="submit">{isRegister ? "Register" : "Login"}</button>
-        </form>
-        <button
-          className={styles.logoutBtn}
-          onClick={() => setIsRegister(r => !r)}
-        >
-          {isRegister ? "Already have an account? Login" : "No account? Register"}
-        </button>
-      </div>
-    );
-  }
-
-  // Om inloggad: visa profil och ordrar
-  return (
-    <div className={styles.profileContainer}>
-      <div className={styles.profileIconRow}>
-        <span className={styles.profileIconLarge} role="img" aria-label="profile">👤</span>
-      </div>
-      <h2>Profile</h2>
-      <div className={styles.profileInfo}>
-        <div>
-          <b>Username:</b> {user.username}
-        </div>
-        <div>
-          <b>Email:</b> {user.email}
-        </div>
-        <button className={styles.logoutBtn} onClick={logout}>
-          Logout
-        </button>
-      </div>
-      <h3>Your Orders</h3>
-      {loading ? (
-        <div>Loading...</div>
-      ) : orders.length === 0 ? (
-        <div>No orders found.</div>
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                required
+              />
+            </div>
+            {error && <div className={styles.error}>{error}</div>}
+            <button type="submit">{isRegister ? "Register" : "Login"}</button>
+          </form>
+          <button
+            className={styles.toggleBtn}
+            onClick={() => setIsRegister(r => !r)}
+          >
+            {isRegister ? "Already have an account? Login" : "No account? Register"}
+          </button>
+        </>
       ) : (
-        <ul>
-          {orders.map((order: any) => (
-            <li key={order.id}>
-              <b>Order #{order.id}</b> – Total: {order.attributes.total} SEK
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className={styles.profileIconRow}>
+            <span className={styles.profileIconLarge} role="img" aria-label="profile">👤</span>
+          </div>
+          <h2>Profile</h2>
+          <div className={styles.profileInfo}>
+            <div>
+              <b>Username:</b> {user.username}
+            </div>
+            <div>
+              <b>Email:</b> {user.email}
+            </div>
+            <button className={styles.logoutBtn} onClick={logout}>
+              Logout
+            </button>
+          </div>
+          <h3>Your Orders</h3>
+          {loading ? (
+            <div className={styles.loadingState}>Loading orders...</div>
+          ) : orders.length === 0 ? (
+            <div className={styles.emptyState}>No orders found.</div>
+          ) : (
+            <ul>
+              {orders.map((order: any) => (
+                <li key={order.id}>
+                  <b>Order #{order.id}</b> – Total: {order.attributes.total} SEK
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </div>
   );

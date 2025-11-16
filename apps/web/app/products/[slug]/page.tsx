@@ -8,6 +8,8 @@ import { fetchProductBySlug, fetchProductsRaw, API_URL } from '../../../../../pa
 import { Product } from '../../../../../packages/types/src/product';
 import { useCart } from '../../../store/cart';
 import styles from './ProductDetail.module.css';
+import { ecommerceEvent } from '../../../lib/gtag';
+import { useEffect } from 'react';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -17,6 +19,31 @@ export default function ProductDetailPage() {
 
   // Calculate total quantity in cart
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Transform API data to Product type
+  const transformProductData = (productData: any): Product | null => {
+    if (!productData) return null;
+    
+    const a = productData.attributes ?? productData;
+    const imgPath = a?.image?.url ?? a?.image?.data?.attributes?.url;
+    const imageUrl = imgPath
+      ? (imgPath.startsWith('http') ? imgPath : `${API_URL}${imgPath}`)
+      : undefined;
+    const categoryName =
+      Array.isArray(a?.category)
+        ? (a.category[0]?.name)
+        : (a?.category?.name ?? a?.category?.data?.attributes?.name);
+    return {
+      id: productData.id,
+      name: a?.name ?? 'Unknown',
+      slug: a?.slug ?? '',
+      price: a?.price ?? 0,
+      description: a?.description ?? '',
+      imageUrl,
+      inStock: a?.inStock ?? false,
+      category: categoryName ? { name: categoryName } : undefined,
+    };
+  };
 
   // Fetch product by slug or ID
   const { data, isLoading, error } = useQuery({
@@ -37,30 +64,23 @@ export default function ProductDetailPage() {
     enabled: !!slugOrId,
   });
 
-  // Transform API data to Product type
-  const product: Product | null = data
-    ? (() => {
-        const a = data.attributes ?? data;
-        const imgPath = a?.image?.url ?? a?.image?.data?.attributes?.url;
-        const imageUrl = imgPath
-          ? (imgPath.startsWith('http') ? imgPath : `${API_URL}${imgPath}`)
-          : undefined;
-        const categoryName =
-          Array.isArray(a?.category)
-            ? (a.category[0]?.name)
-            : (a?.category?.name ?? a?.category?.data?.attributes?.name);
-        return {
-          id: data.id,
-          name: a?.name ?? 'Unknown',
-          slug: a?.slug ?? '',
-          price: a?.price ?? 0,
-          description: a?.description ?? '',
-          imageUrl,
-          inStock: a?.inStock ?? false,
-          category: categoryName ? { name: categoryName } : undefined,
-        };
-      })()
-    : null;
+  const product = transformProductData(data);
+
+  // Track product view when product data is loaded - MOVED AFTER data declaration
+  useEffect(() => {
+    if (product) {
+      // Use GA4 recommended view_item event
+      ecommerceEvent.viewItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category?.name
+      });
+      
+      // Track page view for this product
+      ecommerceEvent.pageView(product.name, `/products/${product.slug}`);
+    }
+  }, [product]); // Use product as dependency
 
   const handleAddToCart = () => {
     if (product && product.inStock) {
@@ -70,7 +90,35 @@ export default function ProductDetailPage() {
         price: product.price,
         imageUrl: product.imageUrl,
       });
+      
+      // Track add to cart using GA4 recommended event
+      ecommerceEvent.addToCart({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category?.name
+      });
     }
+  };
+
+  const handleBackToProducts = () => {
+    // Use select_item event for navigation back to products
+    if (product) {
+      ecommerceEvent.selectItem({
+        id: product.id,
+        name: product.name,
+        category: product.category?.name
+      });
+    }
+  };
+
+  const handleViewCart = () => {
+    // Track cart view from product page
+    if (items.length > 0) {
+      const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      ecommerceEvent.beginCheckout(items, total);
+    }
+    router.push('/products');
   };
 
   if (isLoading) {
@@ -88,7 +136,12 @@ export default function ProductDetailPage() {
           <h2>Product not found</h2>
           <p>The product you&apos;re looking for doesn&apos;t exist.</p>
           <Link href="/products">
-            <button className={styles.backBtn}>Back to Products</button>
+            <button 
+              className={styles.backBtn}
+              onClick={handleBackToProducts}
+            >
+              Back to Products
+            </button>
           </Link>
         </div>
       </div>
@@ -100,13 +153,17 @@ export default function ProductDetailPage() {
       {/* Navigation buttons */}
       <div className={styles.navigation}>
         <Link href="/products">
-          <button className={styles.backBtn} aria-label="Back to products">
+          <button 
+            className={styles.backBtn} 
+            aria-label="Back to products"
+            onClick={handleBackToProducts}
+          >
             ← Back to Products
           </button>
         </Link>
         <button
           className={styles.cartIconBtn}
-          onClick={() => router.push('/products')}
+          onClick={handleViewCart}
           aria-label="Go to cart"
         >
           <span className={styles.cartIcon}>🛒</span>
@@ -129,7 +186,9 @@ export default function ProductDetailPage() {
               priority
             />
           ) : (
-            <div className={styles.imagePlaceholder}>No image available</div>
+            <div className={styles.imagePlaceholder}>
+              No image available
+            </div>
           )}
         </div>
 
